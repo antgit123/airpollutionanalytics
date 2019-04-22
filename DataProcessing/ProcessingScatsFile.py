@@ -6,7 +6,7 @@ sc = SparkContext()
 sqlContext = SQLContext(sc)
 
 traffic_lights_filepath = "hdfs://localhost:9000/test1/tlights_vic_4326.csv"
-volume_data_filepath = "hdfs://localhost:9000/data/VSDATA_20180101.csv"
+volume_data_filepath = "hdfs://localhost:9000/scats2018/VSDATA_20180101.csv"
 newCsvPath = "hdfs://localhost:9000/data1/"
 
 trafficfile = sqlContext.read.csv(traffic_lights_filepath, header=True)

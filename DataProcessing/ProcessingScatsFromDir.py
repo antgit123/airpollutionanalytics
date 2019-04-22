@@ -1,8 +1,8 @@
 from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark.sql.functions import when
-from hdfs import Config
-from hdfs import InsecureClient
+# from hdfs import Config
+# from hdfs import InsecureClient
 
 
 # client = InsecureClient('hdfs://localhost:9000', user='sindhu')
@@ -57,16 +57,16 @@ def calculate(df):
         .save(newCsvPath)
 
 
-client = Config().get_client('dev')
-fileList = client.list(volume_data_filepath)
+# client = Config().get_client('dev')
+# fileList = client.list(volume_data_filepath)
 
-# import os
+import os
 # import subprocess
 #
 # cmd = 'hdfs dfs -ls /data'
 # fileList = subprocess.check_output(cmd, shell=True).strip().split('\n')
 
-# fileList = os.listdir(volume_data_filepath)
+fileList = os.listdir(volume_data_filepath)
 for file in fileList:
     print(file)
     volumeFile = sqlContext.read.csv(volume_data_filepath + '/' + file, header=True)
