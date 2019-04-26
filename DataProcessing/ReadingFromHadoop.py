@@ -1,10 +1,6 @@
 import subprocess
 from pyspark import SparkContext
 from pyspark import SQLContext
-from pyspark.sql.functions import when
-from hdfs import InsecureClient
-
-# client = InsecureClient('hdfs://localhost:9000', user='tejal')
 
 sc = SparkContext()
 sqlContext = SQLContext(sc)
