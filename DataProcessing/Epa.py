@@ -79,18 +79,41 @@ if perDayMeasurement:
 else:
     typeOfMeasurement = '1HR_AV'
 
+
+def seq_op(accumulator, element):
+    return (accumulator[0] + element[1], accumulator[1] + 1)
+
+
+# Combiner Operation : Finding Maximum Marks out Partition-Wise Accumulators
+def comb_op(accumulator1, accumulator2):
+    return (accumulator1[0] + accumulator2[0], accumulator1[1] + accumulator2[1])
+
+zero_value = 0
+def getAirQualityAggregateMeasurements(fromDate,toDate,typeOfMeasurement,monitorId,siteId):
+    query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
+    airMeasurementData= requests.get(query).json()
+    airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
+    print(airMeasurementData_rdd.collect())
+    airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (siteId, monitorId, x['DateTimeStart'],x['AQIIndex']))
+    airMeasurementBySiteTime2 = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'], x['DateTimeStart'][-8:],x['AQIIndex']))
+    print(airMeasurementBySiteTime)
+    timeGrouping = airMeasurementBySiteTime2.groupBy(lambda x: x[1]).map(lambda x:(x[0], list(x[1])))
+    for timeRecord in timeGrouping.collect():
+        print(timeRecord)
+    print("done")
+
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
-        airQualityMeasurementData.append(getAirQualityMeasurements('2017010100','2017010200',typeOfMeasurement,monitorId,sites['site']))
+        airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100','2019010100',typeOfMeasurement,monitorId,sites['site']))
 
 #storing result of data collected from sites for air quality measurement call
-with open(epa_output_path+'1.json', 'w') as f:
-    json.dump(airQualityMeasurementData, f)
-with open(epa_output_path+'stationData.json','w') as f:
-    json.dump(sitesPeriodList,f)
-with open(epa_output_path+'airQualityMonitors.json','w')as f:
-    json.dump(airQualityMonitorDictionary['airData'],f)
+# with open(epa_output_path+'1.json', 'w') as f:
+#     json.dump(airQualityMeasurementData, f)
+# with open(epa_output_path+'stationData.json','w') as f:
+#     json.dump(sitesPeriodList,f)
+# with open(epa_output_path+'airQualityMonitors.json','w')as f:
+#     json.dump(airQualityMonitorDictionary['airData'],f)
 
 
 
