@@ -99,7 +99,9 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,typeOfMeasurement,monitor
     print(airMeasurementBySiteTime)
     timeGrouping = airMeasurementBySiteTime2.groupBy(lambda x: x[1]).map(lambda x:(x[0], list(x[1])))
     for timeRecord in timeGrouping.collect():
-        print(timeRecord)
+        df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX'])
+        df = df.groupBy('TIME').avg('INDEX')
+        df.show()
     print("done")
 
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
