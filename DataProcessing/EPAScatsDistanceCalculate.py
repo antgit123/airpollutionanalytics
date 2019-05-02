@@ -7,8 +7,7 @@ from pyspark import SQLContext
 sc = SparkContext()
 sqlContext = SQLContext(sc)
 
-traffic_lights_filepath = "E:/StudyNotes/Semester4/Project/data/tlights_vic_4326.csv"
-newCsvPath = "E:/StudyNotes/Semester4/Project/data/"
+traffic_lights_filepath = "hdfs:45.113.232.133:9000/pointData/tlights_vic_4326.csv"
 
 trafficfile = sqlContext.read.csv(traffic_lights_filepath, header=True)
 coordinateList = trafficfile.select("WKT", "SITE_NO", "SITE_NAME").collect()
@@ -25,7 +24,7 @@ for x in coordinateList:
         if not any(x["SITE_NO"] in row for row in finalList):
             finalList.append(tempList)
 
-f = open("E:/StudyNotes/Semester4/Project/data/stationData.json", "r")
+f = open("hdfs:45.113.232.133:9000/pointData/stationData.json", "r")
 datastore = json.load(f)
 
 distanceDataList = []
@@ -47,7 +46,7 @@ rdd = sc.parallelize(distanceDataList)
 filteredTrafficLightsDf = sqlContext.createDataFrame(rdd, ["EPA_SITE_ID", "EPA_SITE_NAME", "EPA_LATITUDE", "EPA_LONGITUDE",
                                       "SCAT_SITE_ID", "SCAT_SITE_NAME", "SCAT_LATITUDE", "SCAT_LONGITUDE"])
 
-filteredTrafficLightsDf.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").mode('append') \
-        .save("E:/StudyNotes/Semester4/Project/data/finalfilteredData")
+# filteredTrafficLightsDf.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").mode('append') \
+#         .save("E:/StudyNotes/Semester4/Project/data/finalfilteredData")
 
 ProcessingScatsFromDir.processScatsFiles(sqlContext, filteredTrafficLightsDf)
