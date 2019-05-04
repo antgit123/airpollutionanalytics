@@ -30,7 +30,7 @@ distanceDataList = []
 for data in datastore:
     for trafficData in finalList:
         try:
-            dist = getDistance.calculateDistance(data['Latitude'], data['Longitude'], float(trafficData[2]), float(trafficData[3]))
+            dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']), float(trafficData[2]), float(trafficData[3]))
             if dist <= 2.0:
                 otherList = (data['SiteId'], data['Name'], data['Latitude'], data['Longitude'],
                              trafficData[0], trafficData[1], trafficData[2], trafficData[3])
