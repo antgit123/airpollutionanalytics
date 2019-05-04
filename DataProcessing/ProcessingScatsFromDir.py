@@ -46,7 +46,7 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf):
                        '19:00 - 19:59', '20:00 - 20:59', '21:00 - 21:59', '22:00 - 22:59',
                        '23:00 - 23:59')
 
-    for i in range(2,25):
+    for i in range(1,25):
         concatenatedDf = concatenatedDf.withColumn(concatenatedDf.columns[i], concatenatedDf[concatenatedDf.columns[i]]/fileCount)
 
     # finalProcessedDf = concatenatedDf.groupBy("NB_SCATS_SITE").avg('sum(sum_1)', 'sum(sum_2)', 'sum(sum_3)',
