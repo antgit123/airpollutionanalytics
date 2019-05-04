@@ -103,8 +103,8 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
         hour_index = df.first()['TIME']
         avg_index = df.first()['avg(INDEX)']
         avg_airHourlyData.append({hour_index: avg_index})
-    dict1 = {siteId +'-'+ monitorId+ '-'+ year: avg_airHourlyData}
-    return {'key': siteId+ '-'+ monitorId,'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
+    # dict1 = {siteId +'-'+ monitorId+ '-'+ year: avg_airHourlyData}
+    return {'key': str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
 
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
