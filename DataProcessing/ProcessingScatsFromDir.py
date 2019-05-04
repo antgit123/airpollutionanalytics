@@ -17,8 +17,7 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf):
 
     concatenatedDf = 0
     for file in files:
-        print(file)
-        volumeFile = sqlContext.read.csv(volume_data_filepath + '/' + file, header=True)
+        volumeFile = sqlContext.read.csv(file, header=True)
         concatenatedDf = ProcessScatFile.calcNoOfTrafficPerHr(volumeFile, concatenatedDf, filteredTrafficLightsDf)
 
     finalProcessedDf = concatenatedDf.groupBy("NB_SCATS_SITE").avg('sum(sum_1)', 'sum(sum_2)', 'sum(sum_3)',
