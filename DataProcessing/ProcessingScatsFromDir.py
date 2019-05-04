@@ -1,14 +1,22 @@
 import os
 import ProcessScatFile
+import subprocess
 
 
 def processScatsFiles(sqlContext, filteredTrafficLightsDf):
-    volume_data_filepath = "hdfs://45.113.232.133:9000/2017"
     newCsvPath = "hdfs://45.113.232.133:9000/Processed2017"
 
-    fileList = os.listdir(volume_data_filepath)
+    volume_data_filepath = "hdfs://45.113.232.133:9000/2017"
+    argsls = "hdfs dfs -ls -C " + volume_data_filepath
+    proc = subprocess.Popen(argsls, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    s_output = proc.communicate()
+    names = s_output[0].decode("utf-8")
+    files = names.split("\r\n")
+    while "" in files:
+        files.remove("")
+
     concatenatedDf = 0
-    for file in fileList:
+    for file in files:
         print(file)
         volumeFile = sqlContext.read.csv(volume_data_filepath + '/' + file, header=True)
         concatenatedDf = ProcessScatFile.calcNoOfTrafficPerHr(volumeFile, concatenatedDf, filteredTrafficLightsDf)
