@@ -27,7 +27,7 @@ for x in coordinateList:
 datastore = sqlContext.read.json("hdfs://45.113.232.133:9000/pointData/stationData.json")
 
 distanceDataList = []
-for data in datastore:
+for data in datastore.rdd.collect():
     for trafficData in finalList:
         try:
             dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']), float(trafficData[2]), float(trafficData[3]))
