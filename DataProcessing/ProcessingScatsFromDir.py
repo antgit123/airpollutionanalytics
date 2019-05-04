@@ -11,7 +11,7 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf):
     proc = subprocess.Popen(argsls, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     s_output = proc.communicate()
     names = s_output[0].decode("utf-8")
-    files = names.split("\r\n")
+    files = names.split("\n")
     while "" in files:
         files.remove("")
 
