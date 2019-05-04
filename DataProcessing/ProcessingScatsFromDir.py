@@ -3,8 +3,8 @@ import ProcessScatFile
 
 
 def processScatsFiles(sqlContext, filteredTrafficLightsDf):
-    volume_data_filepath = "hdfs:45.113.232.133:9000/2017"
-    newCsvPath = "hdfs:45.113.232.133:9000/Processed2017"
+    volume_data_filepath = "hdfs://45.113.232.133:9000/2017"
+    newCsvPath = "hdfs://45.113.232.133:9000/Processed2017"
 
     fileList = os.listdir(volume_data_filepath)
     concatenatedDf = 0

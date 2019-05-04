@@ -7,7 +7,7 @@ from pyspark import SQLContext
 sc = SparkContext()
 sqlContext = SQLContext(sc)
 
-traffic_lights_filepath = "hdfs:45.113.232.133:9000/pointData/tlights_vic_4326.csv"
+traffic_lights_filepath = "hdfs://45.113.232.133:9000/pointData/tlights_vic_4326.csv"
 
 trafficfile = sqlContext.read.csv(traffic_lights_filepath, header=True)
 coordinateList = trafficfile.select("WKT", "SITE_NO", "SITE_NAME").collect()
@@ -24,8 +24,7 @@ for x in coordinateList:
         if not any(x["SITE_NO"] in row for row in finalList):
             finalList.append(tempList)
 
-f = open("hdfs:45.113.232.133:9000/pointData/stationData.json", "r")
-datastore = json.load(f)
+datastore = sqlContext.read.json("hdfs://45.113.232.133:9000/pointData/stationData.json")
 
 distanceDataList = []
 for data in datastore:
