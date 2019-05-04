@@ -11,11 +11,14 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf):
     proc = subprocess.Popen(argsls, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     s_output = proc.communicate()
     names = s_output[0].decode("utf-8")
-    files = names.split("\r\n")
+    print("in names---->" + names)
+    files = names.split("\n")
     while "" in files:
         files.remove("")
 
     concatenatedDf = 0
+    print("our line-------------")
+    print(files[0])
     for file in files:
         volumeFile = sqlContext.read.csv(file, header=True)
         concatenatedDf = ProcessScatFile.calcNoOfTrafficPerHr(volumeFile, concatenatedDf, filteredTrafficLightsDf)
