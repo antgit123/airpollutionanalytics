@@ -10,7 +10,8 @@ air_quality_monitors_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?"
 air_quality_monitors_site_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?siteId=10107&fromDate=20160101&toDate=20170101"
 air_quality_measurements_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Measurements?"
 air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
-epa_output_path = "C:/unimelb_study/Semester4/Project/DataSources/EPA/"
+epa_ubuntu_output_path = "/mnt/epa/"
+epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
 sqlContext = SQLContext(sc)
 
 #function to get sites data default time period
@@ -109,7 +110,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
         hour_index = df.first()['TIME']
         avg_index = df.first()['avg(INDEX)']
         avg_airHourlyData.append({hour_index: avg_index})
-    return {'key': str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
+    return {'key': siteId+ '-'+ monitorId,'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
 
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
@@ -121,9 +122,10 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
 #storing result of data collected from sites for air quality measurement call
 # with open(epa_output_path+'1.json', 'w') as f:
 #     json.dump(airQualityMeasurementData, f)
-with open(epa_output_path+'Epa_measurements_2018.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_measurements_2018.json', 'w') as f:
     json.dump(airQualityMeasurementData, f)
-with open(epa_output_path+'Epa_wind_2018.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_wind_2018.json', 'w') as f:
     json.dump(airQualityWindData, f)
+
 
 
