@@ -2,7 +2,6 @@ import ProcessScatFile
 import subprocess
 import pyspark.sql.functions as func
 
-
 def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath):
     argsls = "hdfs dfs -ls -C " + volume_data_filepath
     proc = subprocess.Popen(argsls, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -17,12 +16,13 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath)
     for file in files:
         fileCount = fileCount + 1
         volumeFile = sqlContext.read.csv(file, header=True)
-        processedDf = ProcessScatFile.calcNoOfTrafficPerHr(volumeFile, filteredTrafficLightsDf)
+        processedDf = ProcessScatFile.calcNoOfTrafficPerHr(sqlContext, volumeFile, filteredTrafficLightsDf)
         if joinedDf == 0:
             joinedDf = processedDf
         else:
             joinedDf = joinedDf.union(processedDf)
 
+        processedDf = 0
         joinedDf = joinedDf.groupBy("NB_SCATS_SITE").sum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
                                                          '13', '14', '15',
                                                          '16', '17',
@@ -32,11 +32,12 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath)
                                  '14', '15',
                                  '16', '17',
                                  '18', '19', '20', '21', '22', '23', '24')
+        joinedDf = joinedDf.checkpoint(eager=False)
 
     for i in range(1, 25):
-        joinedDf = joinedDf.withColumn(joinedDf.columns[i], joinedDf[joinedDf.columns[i]] / fileCount)
+        joinedDf1 = joinedDf.withColumn(joinedDf.columns[i], joinedDf[joinedDf.columns[i]] / fileCount)
 
-    fDf = joinedDf.join(filteredTrafficLightsDf, filteredTrafficLightsDf.SCAT_SITE_ID == joinedDf.NB_SCATS_SITE,
+    fDf = joinedDf1.join(filteredTrafficLightsDf, filteredTrafficLightsDf.SCAT_SITE_ID == joinedDf1.NB_SCATS_SITE,
                         "inner")
 
     vf = fDf.withColumn("arrayOfColumns",
@@ -46,4 +47,5 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath)
                                    fDf['23'], fDf['24']))
     finalDf = vf.select('NB_SCATS_SITE', 'SCAT_SITE_NAME', 'WKT',
                         func.posexplode(vf.arrayOfColumns).alias('Range', 'AvgCount'))
+    finalDf = finalDf.checkpoint(eager=True)
     return finalDf
