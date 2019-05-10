@@ -10,7 +10,7 @@ air_quality_monitors_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?"
 air_quality_monitors_site_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?siteId=10107&fromDate=20160101&toDate=20170101"
 air_quality_measurements_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Measurements?"
 air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
-epa_output_path = "C:/unimelb_study/Semester4/Project/DataSources/EPA/"
+epa_ubuntu_output_path = "/mnt/epa/"
 epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
 sqlContext = SQLContext(sc)
 
@@ -67,12 +67,12 @@ def getStationAirQualityData(siteId):
     station_overall = {'hasPM2.5': station_data['HasPm25'],'location':(station_data['Latitude'],station_data['Longitude']), 'AQI': station_data['AQI'],'visibility': station_data['Visibility'],'name': station_data['Station']}
     station_parameters_rdd = sc.parallelize(station_data['ParameterValueList'])
     return {'stationData': station_overall}
-    print(station_data)
 
 sitesList = obtainSitesData(get_sites_query)
 sitesPeriodList = obtainSitesDataPeriod('20150101','20190331')
 airQualityMonitorDictionary= getAirQualityMonitors('20150101','20190101')
 airQualityMeasurementData = []
+airQualityWindData = []
 perDayMeasurement = False
 typeOfMeasurement = ''
 if perDayMeasurement:
@@ -80,6 +80,8 @@ if perDayMeasurement:
 else:
     typeOfMeasurement = '1HR_AV'
 
+wind_indicators = ['SWS','VWD','VWS']
+other_indicators = ['DBT']
 
 def seq_op(accumulator, element):
     return (accumulator[0] + element[1], accumulator[1] + 1)
@@ -90,15 +92,17 @@ def comb_op(accumulator1, accumulator2):
     return (accumulator1[0] + accumulator2[0], accumulator1[1] + accumulator2[1])
 
 zero_value = 0
-def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId):
+def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId, isWindIndicator):
     query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
     airMeasurementData= requests.get(query).json()
     airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
-    print(airMeasurementData_rdd.collect())
-    airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (siteId, monitorId, x['DateTimeStart'],x['AQIIndex']))
-    airMeasurementBySiteTime2 = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'], x['DateTimeStart'][-8:],x['AQIIndex']))
-    print(airMeasurementBySiteTime)
-    timeGrouping = airMeasurementBySiteTime2.groupBy(lambda x: x[1]).map(lambda x:(x[0], list(x[1])))
+    if isWindIndicator:
+        measurementIndicator = 'AQIIndex'
+    else:
+        measurementIndicator = 'Value'
+    # airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (siteId, monitorId, x['DateTimeStart'],x['AQIIndex']))
+    airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'], x['DateTimeStart'][-8:],x[measurementIndicator]))
+    timeGrouping = airMeasurementBySiteTime.groupBy(lambda x: x[1]).map(lambda x:(x[0], list(x[1])))
     avg_airHourlyData = []
     for timeRecord in timeGrouping.collect():
         df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX'])
@@ -106,23 +110,22 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
         hour_index = df.first()['TIME']
         avg_index = df.first()['avg(INDEX)']
         avg_airHourlyData.append({hour_index: avg_index})
-    dict1 = {siteId +'-'+ monitorId+ '-'+ year: avg_airHourlyData}
     return {'key': siteId+ '-'+ monitorId,'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
 
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
-        airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site']))
-
+        if monitorId in wind_indicators:
+            airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
+        else:
+            airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
 #storing result of data collected from sites for air quality measurement call
 # with open(epa_output_path+'1.json', 'w') as f:
 #     json.dump(airQualityMeasurementData, f)
-# with open(epa_output_path+'stationData.json','w') as f:
-#     json.dump(sitesPeriodList,f)
-# with open(epa_output_path+'airQualityMonitors.json','w')as f:
-#     json.dump(airQualityMonitorDictionary['airData'],f)
-with open(epa_output_hdfs_path+'Epa_2018.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_measurements_2018.json', 'w') as f:
     json.dump(airQualityMeasurementData, f)
+with open(epa_ubuntu_output_path+'Epa_wind_2018.json', 'w') as f:
+    json.dump(airQualityWindData, f)
 
 
 
