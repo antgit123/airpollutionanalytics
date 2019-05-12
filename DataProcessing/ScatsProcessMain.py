@@ -8,13 +8,13 @@ def main():
     conf = SparkConf().setAppName("scatsProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 
     sc = SparkContext(conf = conf)
-    sc.setCheckpointDir("hdfs://45.113.232.133:9000/Processed2017Checkpoint")
+    sc.setCheckpointDir("hdfs://45.113.232.133:9000/Processed2014Checkpoint")
     sqlContext = SQLContext(sc)
     sqlContext.setConf('spark.sql.shuffle.partitions', '10')
     traffic_lights_filepath = "hdfs://45.113.232.133:9000/pointData/tlights_vic_4326.csv"
     EPAStationData = "hdfs://45.113.232.133:9000/pointData/stationData.json"
-    volume_data_filepath = "hdfs://45.113.232.133:9000/2017"
-    processed_data_filepath = "hdfs://45.113.232.133:9000/Processed2017_1"
+    volume_data_filepath = "hdfs://45.113.232.133:9000/2014"
+    processed_data_filepath = "hdfs://45.113.232.133:9000/Processed2014"
 
     filteredTrafficLight = EPAScatsDistanceCalculate.filterScatsDataWithinEPA(sc, sqlContext, traffic_lights_filepath,
                                                                               EPAStationData)
