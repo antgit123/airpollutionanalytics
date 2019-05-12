@@ -2,6 +2,7 @@ import requests
 from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark import SparkConf
+from shapely import geometry
 import json
 
 get_sites_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/sites"
