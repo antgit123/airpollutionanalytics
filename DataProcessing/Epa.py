@@ -26,7 +26,10 @@ def obtainSitesData(query):
 def obtainSitesDataPeriod(fromDate,toDate):
     query = get_sites_monitor_query+'&fromDate='+fromDate+'&toDate='+toDate
     sites_period_data = requests.get(query).json()
-    return sites_period_data['Sites']
+    sites_period_list = sites_period_data['Sites']
+    for site in sites_period_list:
+        site['Wkt_point'] = str(geometry.Point(site['Latitude'], site['Longitude']))
+    return sites_period_list
 
 #function to get air quality measurements for all sites, indicators categorized by time
 def getAirQualityMeasurements(fromDate,toDate,typeOfMeasurement,monitorId,siteId):
@@ -86,34 +89,33 @@ else:
 wind_indicators = ['SWS','VWD','VWS']
 other_indicators = ['DBT']
 
-def seq_op(accumulator, element):
-    return (accumulator[0] + element[1], accumulator[1] + 1)
-
-
-# Combiner Operation : Finding Maximum Marks out Partition-Wise Accumulators
-def comb_op(accumulator1, accumulator2):
-    return (accumulator1[0] + accumulator2[0], accumulator1[1] + accumulator2[1])
-
-zero_value = 0
 def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId, isWindIndicator):
     query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
     airMeasurementData= requests.get(query).json()
     airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
     if isWindIndicator:
-        measurementIndicator = 'AQIIndex'
+        airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'],
+                                     x['DateTimeStart'][-8:], float(x['Value'])))
     else:
-        measurementIndicator = 'Value'
-    # airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (siteId, monitorId, x['DateTimeStart'],x['AQIIndex']))
-    airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'], x['DateTimeStart'][-8:],float(x[measurementIndicator])))
+        airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'],
+                                x['DateTimeStart'][-8:], float(x['AQIIndex']),float(x['Value'])))
     timeGrouping = airMeasurementBySiteTime.groupBy(lambda x: x[1]).map(lambda x:(x[0], list(x[1])))
     avg_airHourlyData = []
     for timeRecord in timeGrouping.collect():
-        df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX'])
-        df = df.groupBy('TIME').avg('INDEX')
-        hour_index = df.first()['TIME']
-        avg_index = df.first()['avg(INDEX)']
-        avg_airHourlyData.append({hour_index: avg_index})
-    return {'key':str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
+        if isWindIndicator:
+            df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX'])
+            df = df.groupBy('TIME').avg('INDEX')
+            hour_index = df.first()['TIME']
+            avg_index = df.first()['avg(INDEX)']
+            avg_airHourlyData.append({hour_index: avg_index})
+        else:
+            df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX','VALUE'])
+            df = df.groupBy('TIME').avg('INDEX','VALUE')
+            hour_index = df.first()['TIME']
+            avg_airIndex = df.first()['avg(INDEX)']
+            avg_concentrationValue = df.first()['avg(VALUE)']
+            avg_airHourlyData.append({'key': hour_index, hour_index: avg_airIndex,'avg_conc_value': avg_concentrationValue})
+    return {'key': str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
 
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
@@ -122,13 +124,14 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
             airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
         else:
             airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
-#storing result of data collected from sites for air quality measurement call
-# with open(epa_output_path+'1.json', 'w') as f:
-#     json.dump(airQualityMeasurementData, f)
+# #storing result of data collected from sites for air quality measurement call
+# # with open(epa_output_path+'1.json', 'w') as f:
+# #     json.dump(airQualityMeasurementData, f)
+# with open(epa_output_path+'airQualityMonitors.json','w')as f:
+#     json.dump(airQualityMonitorDictionary['airData'],f)
 with open(epa_ubuntu_output_path+'Epa_measurements_2018.json', 'w') as f:
     json.dump(airQualityMeasurementData, f)
 with open(epa_ubuntu_output_path+'Epa_wind_2018.json', 'w') as f:
     json.dump(airQualityWindData, f)
-
 
 
