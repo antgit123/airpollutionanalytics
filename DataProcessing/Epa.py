@@ -1,9 +1,9 @@
 import requests
-from pyspark.context import SparkContext
+from pyspark import SparkContext
 from pyspark import SQLContext
+from pyspark import SparkConf
 import json
 
-sc = SparkContext("local","Epa-app1")
 get_sites_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/sites"
 get_sites_monitor_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Sites?monitoringPurpose=1010"
 air_quality_monitors_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?"
@@ -12,6 +12,9 @@ air_quality_measurements_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Measurem
 air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
 epa_ubuntu_output_path = "/mnt/epa/"
 epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
+
+conf = SparkConf().setAppName("scatsProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
+sc = SparkContext(conf = conf)
 sqlContext = SQLContext(sc)
 
 #function to get sites data default time period
