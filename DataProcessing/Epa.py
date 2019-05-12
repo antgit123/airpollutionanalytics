@@ -13,7 +13,7 @@ air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
 epa_ubuntu_output_path = "/mnt/epa/"
 epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
 
-conf = SparkConf().setAppName("scatsProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
+conf = SparkConf().setAppName("EpaProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 sc = SparkContext(conf = conf)
 sqlContext = SQLContext(sc)
 
@@ -113,7 +113,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
         hour_index = df.first()['TIME']
         avg_index = df.first()['avg(INDEX)']
         avg_airHourlyData.append({hour_index: avg_index})
-    return {'key': siteId+ '-'+ monitorId,'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
+    return {'key':str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
 
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
