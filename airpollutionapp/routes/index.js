@@ -25,7 +25,8 @@ var hdfs_file_operations = {
                 console.log(fileObject[1]['pathSuffix']);
                 let hdfs_file_name = full_url+'/'+fileObject[1]['pathSuffix'];
                 let path1 = "Processed2014/" + fileObject[1]['pathSuffix'];
-                console.log("path:"+ hdfs_file_name);
+                //let path2 = "http://45.113.232.133:50075/webhdfs/v1/Processed2014/part-00000-8d909489-d7cc-4374-93c4-b8d275d4a130.csv";
+                console.log("path----->"+ path1);
                 console.log("Number of files in the folder: ", objLength);
                 if(hdfs_file_name !== null){
                     let remoteFileStream = hdfs.createReadStream(path1);
