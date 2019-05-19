@@ -1,4 +1,12 @@
-body {
+
+body{
+  /*height: 100%;*/
+  /*width: 100%;*/
+  background: url("https://cdn.newsapi.com.au/image/v1/71707d70da0b37f5c7f3187d03d37596?width=650") no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
@@ -6,3 +14,34 @@ body {
 a {
   color: #00B7FF;
 }
+
+.app-header{
+  text-align: center;
+}
+
+.jumbotron {
+ background-color: #e9ecef;
+}
+
+.vis-form-row{
+  margin-top: 20px;
+}
+
+.vis-form-container{
+  margin-left: 10px;
+}
+
+.formRow{
+  margin-left: 10px;
+  margin-top:10px;
+}
+
+#mapid{
+  height: 100vh;
+}
+
+
+#mapid2{
+  height: 100vh;
+}
+

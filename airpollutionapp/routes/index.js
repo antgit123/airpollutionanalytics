@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 var webhdfsmanager = require('webhdfs');
 var request = require("request");
+
+//hdfs parameters
 let url = "http://45.113.232.133";
 let port = 50070;
 let dir_path = "/Processed2014";
@@ -14,6 +16,7 @@ let hdfs = webhdfsmanager.createClient({
     path: "webhdfs/v1/"
 });
 
+//function to fetch files from hdfs
 var hdfs_file_operations = {
     getFileData: (fileurl) => {
         let hdfs_file_name = null;
@@ -35,10 +38,17 @@ var hdfs_file_operations = {
                         console.log("...error: ", err);
                     });
                     let dataStream = [];
+                    let outputStream = [];
                     remoteFileStream.on("data", function onChunk(chunk) { //on read success
                         // Do something with the data chunk
                         dataStream.push(chunk);
-                        console.log('..chunk..',chunk);
+                        //console.log('..chunk..',chunk);
+                        dataStream.map( (chunk) =>{
+                            outputStream.push(chunk.toString());
+
+                        });
+                        // console.log('output Stream',outputStream);
+                        return outputStream;
                     });
                 }
             } else {
@@ -49,9 +59,14 @@ var hdfs_file_operations = {
 }
 
 /* GET home page. */
-router.get('/ser', function(req, res, next) {
+router.get('/', function(req, res, next) {
   hdfs_file_operations.getFileData(full_url);
-  res.render('index', { title: 'Express' });
+  res.render('index', { title: 'Air Pollution Analytics App' });
+});
+
+router.get('/visualization', function(req,res,next){
+   console.log('type'+req.query.type);
+   res.render('visualization',{type: req.query.type});
 });
 
 module.exports = router;

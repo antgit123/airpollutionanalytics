@@ -1,0 +1,25 @@
+extends layout
+
+block content
+    div#parent-visualization-container.container.bg-white
+        //row for the separation of the
+        div.row
+            //for navigation menu
+            div.col-3
+
+                    div.form-group
+                        label(for="substanceSelect") Select Substance:
+                        select#substanceSelect.form-control
+                            option Select Substance
+                    div.form-group
+                        label(for="regionSelect") Select Region:
+                        select#regionSelect.form-control
+                            option Select Region
+                    div.form-group
+                        button#submitOptions.btn-info.btn-lg viz
+            //for visualization area
+            div.col-9
+                div#mapid
+        div.row
+            div.col-3
+            div.col-9
