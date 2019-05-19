@@ -1,13 +1,29 @@
 $(function() {
-    var that = this;
+    let that = this;
 
-    // this.shapeFile = this.getShapeFile();
-    var appController = {
+    let appController = {
         loadVisualization: function(visualizationOption){
             var that = this;
             this.map = this.getMap();
-            this.shapeFile = this.getShapeFile();
-            //this.shapeFile.addTo(this.map);
+            // if(visualizationOption === 'emission'){
+                $.ajax({
+                        type: "GET",
+                        url: '/visualization/getEmissionData',
+                        contentType: 'application/json',
+                        success: function () {
+                            // if (response.type !== undefined && response.type === "db") {
+                            //     $("#error").text(response.message);
+                            //     $("#viewContent").attr('disabled', 'true');
+                            //
+                            // }else{
+                            //     console.log('found something');
+                            // }
+                            console.log('requested');
+                        },
+                });
+
+
+            // }
         },
         getMap: function () {
             var i, tabcontent, tablinks;
@@ -22,27 +38,29 @@ $(function() {
                 id: 'mapbox.streets',
                 accessToken: 'sk.eyJ1IjoibWFwYm94YW50OTIiLCJhIjoiY2p2dGZ6NTlnMGNseDQ1b2phdHJ3Z2NsMiJ9.Qh6bVOZQ1HyAPtYB05xaXA'
             }).addTo(mymap);
+            // this.shapeFile = this.getShapeFile();
             return mymap;
         },
 
         getShapeFile: function(){
-            return new L.Shapefile('public/javascripts/vic_shapefile.zip', {
-                onEachFeature: function (feature, layer) {
-                    // if (feature.properties) {
-                    //     var suburbmapdata = getInfoFrom(Object, feature).join(" <br/>");
-                    //     layer.bindPopup(suburbmapdata);
-                    //     if (feature.properties.sentimentDensity) {
-                    //         that.incomeVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.tot_tot});
-                    //         that.occupationVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_p_tot});
-                    //         that.immigrantsVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_tot_p_});
-                    //         that.homelessPeopleVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_hl_p_h});
-                    //     }
-                    // }
-                    layer.on({
-                        //mouseover: highlightFeature,
-                        //mouseout: resetHighlight
-                    });
-                },
+            var that = this;
+            var shpFile = new L.Shapefile('public/javascripts/lga2017.zip', {
+                // onEachFeature: function (feature, layer) {
+                //     // if (feature.properties) {
+                //     //     var suburbmapdata = getInfoFrom(Object, feature).join(" <br/>");
+                //     //     layer.bindPopup(suburbmapdata);
+                //     //     if (feature.properties.sentimentDensity) {
+                //     //         that.incomeVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.tot_tot});
+                //     //         that.occupationVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_p_tot});
+                //     //         that.immigrantsVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_tot_p_});
+                //     //         that.homelessPeopleVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_hl_p_h});
+                //     //     }
+                //     // }
+                //     layer.on({
+                //         //mouseover: highlightFeature,
+                //         //mouseout: resetHighlight
+                //     });
+                // },
                 // style: function (feature) {
                 //     if (feature.properties.sentimentDensity === undefined) {
                 //         feature.properties.sentimentDensity = that.getSentimentDensity(feature.properties.sa2_main16);
@@ -58,24 +76,43 @@ $(function() {
                 //     };
                 // }
             });
+            shpFile.addTo(that.map);
+            return shpFile;
         }
     }
-    that.visualizationOption = 'type';
     $('#visualizationType').change(function (evt) {
         that.visualizationOption = this.value;
     });
 
     $('#visualize-button').on('click',()=>{
-        if(that.visualizationOption === 'type'){
+        if(that.visualizationOption === undefined){
             alert("Please select a visualization option");
         } else{
-            window.location = '/visualization?type=' + that.visualizationOption;
-            appController.loadVisualization(that.visualizationOption);
+            window.location.href = '/visualization?type=' + that.visualizationOption;
         }
     });
 
     $('#submitOptions').on('click',()=>{
-        that.map = appController.getMap();
+        $.ajax({
+            type: "GET",
+            url: '/visualization/getEmissionData',
+            contentType: 'application/json',
+            success: function (response) {
+                // if (response.type !== undefined && response.type === "db") {
+                //     $("#error").text(response.message);
+                //     $("#viewContent").attr('disabled', 'true');
+                //
+                // }else{
+                //     console.log('found something');
+                // }
+                console.log(response);
+            },
+
+        });
     });
-    this.map = appController.getMap();
+
+    if(window.location.pathname === '/visualization') {
+        console.log('ax');
+        appController.loadVisualization(that.visualizationOption);
+    }
 });

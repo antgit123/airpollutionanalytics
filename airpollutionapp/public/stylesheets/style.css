@@ -37,11 +37,10 @@ a {
 }
 
 #mapid{
-  height: 100vh;
+  height: 84vh;
 }
 
-
-#mapid2{
-  height: 100vh;
+#parent-visualization-container{
+  border: 4px solid grey;
 }
 

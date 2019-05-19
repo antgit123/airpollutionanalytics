@@ -75,8 +75,8 @@ def getStationAirQualityData(siteId):
     station_parameters_rdd = sc.parallelize(station_data['ParameterValueList'])
     return {'stationData': station_overall}
 
-sitesList = obtainSitesData(get_sites_query)
-sitesPeriodList = obtainSitesDataPeriod('20150101','20190331')
+# sitesList = obtainSitesData(get_sites_query)
+# sitesPeriodList = obtainSitesDataPeriod('20150101','20190331')
 airQualityMonitorDictionary= getAirQualityMonitors('20150101','20190101')
 airQualityMeasurementData = []
 airQualityWindData = []
@@ -90,49 +90,89 @@ else:
 wind_indicators = ['SWS','VWD','VWS']
 other_indicators = ['DBT']
 
-def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId, isWindIndicator):
+def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId, isWindIndicator, result):
     query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
     airMeasurementData= requests.get(query).json()
     airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
     if isWindIndicator:
         airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'],
-                                     x['DateTimeStart'][-8:], float(x['Value'])))
+                                     x['DateTimeStart'], float(x['Value']), x['Latitude'], x['Longitude']))
     else:
         airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'],
-                                x['DateTimeStart'][-8:], float(x['AQIIndex']),float(x['Value'])))
+                                x['DateTimeStart'], float(x['AQIIndex']),float(x['Value']), x['Latitude'], x['Longitude']))
+    # if measurementIndicator == 'Value':
+    # airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (siteId, monitorId, x['DateTimeStart'],x['AQIIndex']))
+    # airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'], x['DateTimeStart'][-8:],float(x['AQIIndex'])))
     timeGrouping = airMeasurementBySiteTime.groupBy(lambda x: x[1]).map(lambda x:(x[0], list(x[1])))
-    avg_airHourlyData = []
+
+    # avg_airHourlyData = []
     for timeRecord in timeGrouping.collect():
         if isWindIndicator:
-            df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX'])
+            df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX','LATITUDE','LONGITUDE'])
+            lat = df.first()['LATITUDE']
+            lon = df.first()['LONGITUDE']
             df = df.groupBy('TIME').avg('INDEX')
             hour_index = df.first()['TIME']
             avg_index = df.first()['avg(INDEX)']
-            avg_airHourlyData.append({hour_index: avg_index})
+            dict_Epa = {
+                'siteId':siteId,
+                'monitorId': monitorId,
+                'dtg': hour_index,
+                'latitude': lat,
+                'longitude': lon,
+                'avg_value': avg_index
+            }
+            if len(dict_Epa.keys()) != 0:
+                result.append(dict_Epa)
+            # avg_airHourlyData.append(dict)
         else:
-            df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX','VALUE'])
+            df = sqlContext.createDataFrame(timeRecord[1], ['DATE', 'TIME', 'INDEX','VALUE','LATITUDE','LONGITUDE'])
+            lat = df.first()['LATITUDE']
+            lon = df.first()['LONGITUDE']
             df = df.groupBy('TIME').avg('INDEX','VALUE')
             hour_index = df.first()['TIME']
             avg_airIndex = df.first()['avg(INDEX)']
             avg_concentrationValue = df.first()['avg(VALUE)']
-            avg_airHourlyData.append({'key': hour_index, hour_index: avg_airIndex,'avg_conc_value': avg_concentrationValue})
-    return {'key': str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
+            # avg_airHourlyData.append({'key': hour_index, hour_index: avg_airIndex,'avg_conc_value': avg_concentrationValue})
+            dict_Epa = {
+                'siteId': siteId,
+                'monitorId': monitorId,
+                'dtg': hour_index,
+                'latitude': lat,
+                'longitude': lon,
+                'avg_value': avg_concentrationValue,
+                'avg_airIndex': avg_airIndex
+            }
+            if len(dict_Epa.keys()) != 0:
+                result.append(dict_Epa)
+            # avg_airHourlyData.append(dict)
 
+    # return {'key': str(siteId)+ '-'+ str(monitorId),'siteId': siteId, 'monitorId': monitorId, 'hourlyData':avg_airHourlyData,'year': year}
+
+final_Measurement_Result = {}
+final_Wind_Result={}
+final_Measurement_Result['Features']= []
+final_Wind_Result['Features'] = []
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
         if monitorId in wind_indicators:
-            airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
+            # airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
+            getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True,final_Wind_Result['Features'])
         else:
-            airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
+            getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False,final_Measurement_Result['Features'])
+            # airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
 # #storing result of data collected from sites for air quality measurement call
 # # with open(epa_output_path+'1.json', 'w') as f:
 # #     json.dump(airQualityMeasurementData, f)
+# station_keys = ["SiteId","Name","Wkt_point"]
+# with open(epa_output_path+'stationData2.json','w') as f:
+#     json.dump(sitesPeriodList,f)
 # with open(epa_output_path+'airQualityMonitors.json','w')as f:
 #     json.dump(airQualityMonitorDictionary['airData'],f)
-with open(epa_ubuntu_output_path+'Epa_measurements_2018.json', 'w') as f:
-    json.dump(airQualityMeasurementData, f)
-with open(epa_ubuntu_output_path+'Epa_wind_2018.json', 'w') as f:
-    json.dump(airQualityWindData, f)
+with open(epa_ubuntu_output_path+'Epa_geomesa_measurements_2018.json', 'w') as f:
+    json.dump(final_Measurement_Result, f)
+with open(epa_ubuntu_output_path+'Epa_geomesa_wind_2018.json', 'w') as f:
+    json.dump(final_Wind_Result, f)
 
 

@@ -64,9 +64,4 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Air Pollution Analytics App' });
 });
 
-router.get('/visualization', function(req,res,next){
-   console.log('type'+req.query.type);
-   res.render('visualization',{type: req.query.type});
-});
-
 module.exports = router;
