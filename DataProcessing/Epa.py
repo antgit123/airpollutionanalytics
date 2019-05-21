@@ -159,9 +159,9 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
     for sites in airIndicatorRecord[1]:
         if monitorId in wind_indicators:
             # airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
-            getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True,final_Wind_Result['Features'])
+            getAirQualityAggregateMeasurements('2015010100','2016010100','2015',typeOfMeasurement,monitorId,sites['site'], True,final_Wind_Result['Features'])
         else:
-            getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False,final_Measurement_Result['Features'])
+            getAirQualityAggregateMeasurements('2015010100', '2016010100', '2015', typeOfMeasurement, monitorId,sites['site'], False,final_Measurement_Result['Features'])
             # airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
 # #storing result of data collected from sites for air quality measurement call
 # # with open(epa_output_path+'1.json', 'w') as f:
@@ -171,9 +171,9 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
 #     json.dump(sitesPeriodList,f)
 # with open(epa_output_path+'airQualityMonitors.json','w')as f:
 #     json.dump(airQualityMonitorDictionary['airData'],f)
-with open(epa_ubuntu_output_path+'Epa_geomesa_measurements_2018.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_geomesa_measurements_2015_final.json', 'w') as f:
     json.dump(final_Measurement_Result, f)
-with open(epa_ubuntu_output_path+'Epa_geomesa_wind_2018.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_geomesa_wind_2015_final.json', 'w') as f:
     json.dump(final_Wind_Result, f)
 
 
