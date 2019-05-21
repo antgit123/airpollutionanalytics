@@ -11,7 +11,7 @@ air_quality_monitors_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?"
 air_quality_monitors_site_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitors?siteId=10107&fromDate=20160101&toDate=20170101"
 air_quality_measurements_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Measurements?"
 air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
-epa_ubuntu_output_path = "/mnt/epa/"
+epa_ubuntu_output_path = "/mnt/epa_geomesa/"
 epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
 
 conf = SparkConf().setAppName("EpaProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
@@ -175,9 +175,9 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
 #     json.dump(sitesPeriodList,f)
 # with open(epa_output_path+'airQualityMonitors.json','w')as f:
 #     json.dump(airQualityMonitorDictionary['airData'],f)
-with open(epa_ubuntu_output_path+'Epa_geomesa_measurements_2015_final.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_geomesa_measurements_'+year+'.json', 'w') as f:
     json.dump(final_Measurement_Result, f)
-with open(epa_ubuntu_output_path+'Epa_geomesa_wind_2015_final.json', 'w') as f:
+with open(epa_ubuntu_output_path+'Epa_geomesa_wind_'+year+'.json', 'w') as f:
     json.dump(final_Wind_Result, f)
 
 
