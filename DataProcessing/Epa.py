@@ -3,6 +3,7 @@ from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark import SparkConf
 import json
+import sys
 
 get_sites_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/sites"
 get_sites_monitor_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Sites?monitoringPurpose=1010"
@@ -111,7 +112,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
             lat = timeRecord[1][0][2]
             lon = timeRecord[1][0][3]
             df = df.groupBy('TIME').avg('INDEX')
-            todaydate = '2018-01-01T'
+            todaydate = year + '-01-01T'
             hour_index = df.first()['TIME']
             avg_index = df.first()['avg(INDEX)']
             dict_Epa = {
@@ -130,7 +131,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
             lat = timeRecord[1][0][3]
             lon = timeRecord[1][0][4]
             df = df.groupBy('TIME').avg('INDEX','VALUE')
-            todaydate = '2018-01-01T'
+            todaydate = year + '-01-01T'
             hour_index = df.first()['TIME']
             avg_airIndex = df.first()['avg(INDEX)']
             avg_concentrationValue = df.first()['avg(VALUE)']
@@ -154,14 +155,17 @@ final_Measurement_Result = {}
 final_Wind_Result={}
 final_Measurement_Result['Features']= []
 final_Wind_Result['Features'] = []
+startdate = sys.argv[1]
+enddate = sys.argv[2]
+year = sys.argv[3]
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
         if monitorId in wind_indicators:
             # airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
-            getAirQualityAggregateMeasurements('2015010100','2016010100','2015',typeOfMeasurement,monitorId,sites['site'], True,final_Wind_Result['Features'])
+            getAirQualityAggregateMeasurements(startdate,enddate,year,typeOfMeasurement,monitorId,sites['site'], True,final_Wind_Result['Features'])
         else:
-            getAirQualityAggregateMeasurements('2015010100', '2016010100', '2015', typeOfMeasurement, monitorId,sites['site'], False,final_Measurement_Result['Features'])
+            getAirQualityAggregateMeasurements(startdate, enddate, year, typeOfMeasurement, monitorId,sites['site'], False,final_Measurement_Result['Features'])
             # airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
 # #storing result of data collected from sites for air quality measurement call
 # # with open(epa_output_path+'1.json', 'w') as f:
