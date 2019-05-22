@@ -1,11 +1,10 @@
-import pyspark.sql.functions as func
+from pyspark.sql.functions import when
 
 def calcNoOfTrafficPerHr(sqlContext, df,trafficSite):
     sqlContext.clearCache()
-    scatDate = df.first()['QT_INTERVAL_COUNT'].replace('00:00:00', '')
     # Replace negative and blank values with 0
     for col in df.columns:
-        df = df.withColumn(col, func.when(df[col] > 0, df[col]).otherwise(0))
+        df = df.withColumn(col, when(df[col] > 0, df[col]).otherwise(0))
 
     df1 = df.checkpoint(eager=True)
     # Extract only NB_SCATS_SITE and V00 -- V95
@@ -37,7 +36,7 @@ def calcNoOfTrafficPerHr(sqlContext, df,trafficSite):
     df5 = df4.toDF('NB_SCATS_SITE', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15',
                        '16', '17',
                        '18', '19', '20', '21', '22', '23', '24')
-    df5 = df5.withColumn('date', func.lit(scatDate))
+
     sqlContext.clearCache()
     df5 = df5.checkpoint(eager=True)
     return df5

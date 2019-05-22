@@ -18,19 +18,40 @@ def filterScatsDataWithinEPA(sc, sqlContext, trafficLightDataPath, EPAStationDat
                 finalList.append(tempList)
 
     distanceDataList = []
-    for data in datastore.rdd.collect():
-        for trafficData in finalList:
+    distanceDictionary = {}
+    otherList = {}
+    # for data in datastore.rdd.collect():
+    #     for trafficData in finalList:
+    #         try:
+    #             dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']), float(trafficData[2]), float(trafficData[3]))
+    #             if dist <= 2.0:
+    #                 otherList = (trafficData[0], trafficData[1], trafficData[4], data['SiteId'], data['Name'])
+    #                 if not any(otherList[0] in row for row in distanceDataList):
+    #                     distanceDataList.append(otherList)
+    #                     distanceDictionary
+    #                 else:
+    #                     for row in distanceDataList:
+    #
+    #         except ValueError:
+    #             continue
+
+    for trafficData in finalList:
+        for data in datastore.rdd.collect():
             try:
-                dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']), float(trafficData[2]), float(trafficData[3]))
+                dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']),
+                                                     float(trafficData[2]), float(trafficData[3]))
                 if dist <= 2.0:
-                    otherList = (trafficData[0], trafficData[1], trafficData[4])
-
-                    if not any(otherList[0] in row for row in distanceDataList):
-                        distanceDataList.append(otherList)
-
+                    if trafficData[0] not in distanceDictionary.keys():
+                        distanceDictionary[trafficData[0]] = dist
+                        otherList[trafficData[0]] = (trafficData[0], trafficData[1], trafficData[4], data['SiteId'], data['Name'])
+                    else:
+                        if distanceDictionary.get(trafficData[0]) > dist:
+                            distanceDictionary[trafficData[0]] = dist
+                            otherList[trafficData[0]] = (trafficData[0], trafficData[1], trafficData[4], data['SiteId'], data['Name'])
             except ValueError:
                 continue
 
-    rdd = sc.parallelize(distanceDataList)
-    df = sqlContext.createDataFrame(rdd, ["SCAT_SITE_ID", "SCAT_SITE_NAME", "WKT"])
+
+    rdd = sc.parallelize(otherList.values())
+    df = sqlContext.createDataFrame(rdd, ["SCAT_SITE_ID", "SCAT_SITE_NAME", "WKT", "EPA_SITE_ID", "EPA_SITE_NAME"])
     return df
