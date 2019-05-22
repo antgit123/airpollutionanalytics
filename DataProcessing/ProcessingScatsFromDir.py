@@ -2,7 +2,7 @@ import ProcessScatFile
 import subprocess
 import pyspark.sql.functions as func
 
-def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath):
+def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath, year):
     argsls = "hdfs dfs -ls -C " + volume_data_filepath
     proc = subprocess.Popen(argsls, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     s_output = proc.communicate()
@@ -53,7 +53,7 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath)
                         func.posexplode(vf.arrayOfColumns).alias('Range', 'AvgCount'))
     finalDf = finalDf.checkpoint(eager=True)
 
-    todaydate = '2018/01/01 '
+    todaydate = year+'/01/01 '
     finalDf = finalDf.withColumn('DateTime',
                                  func.to_timestamp(func.concat(func.lit(todaydate), finalDf['Range']), "yyyy/MM/dd HH"))
     scatsDf = finalDf.checkpoint(eager=True)
