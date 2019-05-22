@@ -49,7 +49,7 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath)
                                    fDf['23'], fDf['24']))
     
     vf = vf.checkpoint(eager=True)
-    finalDf = vf.select('NB_SCATS_SITE', 'SCAT_SITE_NAME', 'WKT',
+    finalDf = vf.select('NB_SCATS_SITE', 'SCAT_SITE_NAME', 'WKT', "EPA_SITE_ID", "EPA_SITE_NAME",
                         func.posexplode(vf.arrayOfColumns).alias('Range', 'AvgCount'))
     finalDf = finalDf.checkpoint(eager=True)
 

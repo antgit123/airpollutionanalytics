@@ -68,13 +68,13 @@ def getAirQualityMonitors(fromDate,toDate):
     airDataDict = {'airData':air_monitor_allsites_data['Monitors'],'airQualitySites':air_quality_site_group}
     return airDataDict
 
-#functions returns air quality measurements for last 2 days for specified station id
-def getStationAirQualityData(siteId):
-    query = air_quality_station_query + 'pointId='+siteId
+#functions returns station name for the given siteId
+def getStationName(siteId):
+    query = air_quality_station_query + 'pointId='+str(siteId)
     station_data = requests.get(query).json()
-    station_overall = {'hasPM2.5': station_data['HasPm25'],'location':(station_data['Latitude'],station_data['Longitude']), 'AQI': station_data['AQI'],'visibility': station_data['Visibility'],'name': station_data['Station']}
-    station_parameters_rdd = sc.parallelize(station_data['ParameterValueList'])
-    return {'stationData': station_overall}
+    # station_overall = {'hasPM2.5': station_data['HasPm25'],'location':(station_data['Latitude'],station_data['Longitude']), 'AQI': station_data['AQI'],'visibility': station_data['Visibility'],'name': station_data['Station']}
+    # station_parameters_rdd = sc.parallelize(station_data['ParameterValueList'])
+    return station_data['Station']
 
 # sitesList = obtainSitesData(get_sites_query)
 # sitesPeriodList = obtainSitesDataPeriod('20150101','20190331')
@@ -91,7 +91,7 @@ else:
 wind_indicators = ['SWS','VWD','VWS']
 other_indicators = ['DBT']
 
-def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId, isWindIndicator, result):
+def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId,stationName, isWindIndicator, result):
     query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
     airMeasurementData= requests.get(query).json()
     airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
@@ -119,7 +119,8 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
                 'dtg': todaydate+hour_index,
                 'latitude': lat,
                 'longitude': lon,
-                'avg_value': avg_index
+                'avg_value': avg_index,
+                'stationName': stationName
             }
             if len(dict_Epa.keys()) != 0:
                 result.append(dict_Epa)
@@ -141,7 +142,8 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
                 'latitude': lat,
                 'longitude': lon,
                 'avg_value': avg_concentrationValue,
-                'avg_airIndex': avg_airIndex
+                'avg_airIndex': avg_airIndex,
+                'stationName': stationName
             }
             if len(dict_Epa.keys()) != 0:
                 result.append(dict_Epa)
@@ -159,11 +161,12 @@ year = sys.argv[3]
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
+        stationName = getStationName(sites['site'])
         if monitorId in wind_indicators:
             # airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
-            getAirQualityAggregateMeasurements(startdate,enddate,year,typeOfMeasurement,monitorId,sites['site'], True,final_Wind_Result['Features'])
+            getAirQualityAggregateMeasurements(startdate,enddate,year,typeOfMeasurement,monitorId,sites['site'], stationName, True,final_Wind_Result['Features'])
         else:
-            getAirQualityAggregateMeasurements(startdate, enddate, year, typeOfMeasurement, monitorId,sites['site'], False,final_Measurement_Result['Features'])
+            getAirQualityAggregateMeasurements(startdate, enddate, year, typeOfMeasurement, monitorId,sites['site'], stationName, False,final_Measurement_Result['Features'])
             # airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
 # #storing result of data collected from sites for air quality measurement call
 # # with open(epa_output_path+'1.json', 'w') as f:
