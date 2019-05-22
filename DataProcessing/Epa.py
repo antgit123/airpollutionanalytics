@@ -16,6 +16,7 @@ epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
 
 conf = SparkConf().setAppName("EpaProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 sc = SparkContext(conf = conf)
+sc.setCheckpointDir("hdfs://45.113.232.133:9000/Checkpoint")
 sqlContext = SQLContext(sc)
 sqlContext.setConf('spark.sql.shuffle.partitions', '10')
 
@@ -110,6 +111,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
             lat = timeRecord[1][0][2]
             lon = timeRecord[1][0][3]
             df = df.groupBy('TIME').avg('INDEX')
+            df = df.checkpoint(eager = True)
             todaydate = year + '-01-01T'
             hour_index = df.first()['TIME']
             avg_index = df.first()['avg(INDEX)']
@@ -130,6 +132,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
             lat = timeRecord[1][0][3]
             lon = timeRecord[1][0][4]
             df = df.groupBy('TIME').avg('INDEX','VALUE')
+            df = df.checkpoint(eager=True)
             todaydate = year + '-01-01T'
             hour_index = df.first()['TIME']
             avg_airIndex = df.first()['avg(INDEX)']
@@ -168,6 +171,7 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
         else:
             getAirQualityAggregateMeasurements(startdate, enddate, year, typeOfMeasurement, monitorId,sites['site'], stationName, False,final_Measurement_Result['Features'])
             # airQualityMeasurementData.append(getAirQualityAggregateMeasurements('2018010100', '2019010100', '2018', typeOfMeasurement, monitorId,sites['site'], False))
+        sqlContext.clearCache()
 # #storing result of data collected from sites for air quality measurement call
 # # with open(epa_output_path+'1.json', 'w') as f:
 # #     json.dump(airQualityMeasurementData, f)
