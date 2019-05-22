@@ -75,7 +75,7 @@ def getStationName(siteId):
     station_data = requests.get(query).json()
     # station_overall = {'hasPM2.5': station_data['HasPm25'],'location':(station_data['Latitude'],station_data['Longitude']), 'AQI': station_data['AQI'],'visibility': station_data['Visibility'],'name': station_data['Station']}
     # station_parameters_rdd = sc.parallelize(station_data['ParameterValueList'])
-    return station_data['Station']
+    return station_data
 
 # sitesList = obtainSitesData(get_sites_query)
 # sitesPeriodList = obtainSitesDataPeriod('20150101','20190331')
@@ -164,7 +164,8 @@ year = sys.argv[3]
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
-        stationName = getStationName(sites['site'])
+        stationData = getStationName(sites['site'])
+        stationName = stationData['Station']
         if monitorId in wind_indicators:
             # airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
             getAirQualityAggregateMeasurements(startdate,enddate,year,typeOfMeasurement,monitorId,sites['site'], stationName, True,final_Wind_Result['Features'])
