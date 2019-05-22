@@ -5,20 +5,25 @@ $(function() {
         loadVisualization: function(visualizationOption){
             var that = this;
             this.map = this.getMap();
+            this.substanceList =[];
             // if(visualizationOption === 'emission'){
                 $.ajax({
                         type: "GET",
                         url: '/visualization/getEmissionData',
                         contentType: 'application/json',
-                        success: function () {
-                            // if (response.type !== undefined && response.type === "db") {
-                            //     $("#error").text(response.message);
-                            //     $("#viewContent").attr('disabled', 'true');
-                            //
-                            // }else{
-                            //     console.log('found something');
-                            // }
-                            console.log('requested');
+                        success: function (response, body) {
+                           response.forEach(function(substance){
+                               let substanceName = substance.Name;
+                               let substanceId = substance.SubstanceId;
+                               let substanceThreshold = substance.SubstanceThreshold;
+                               $("#substanceSelect").append("<option value='"+substanceId+"'>" + substanceName + "</option>");
+                               that.substanceList.push({
+                                   name: substanceName,
+                                   id: substanceId,
+                                   threshold: substanceThreshold
+                               });
+
+                           })
                         },
                 });
 
@@ -38,29 +43,36 @@ $(function() {
                 id: 'mapbox.streets',
                 accessToken: 'sk.eyJ1IjoibWFwYm94YW50OTIiLCJhIjoiY2p2dGZ6NTlnMGNseDQ1b2phdHJ3Z2NsMiJ9.Qh6bVOZQ1HyAPtYB05xaXA'
             }).addTo(mymap);
-            // this.shapeFile = this.getShapeFile();
+            this.shapeFile = this.getShapeFile();
+            this.shapeFile.addTo(mymap);
             return mymap;
         },
 
         getShapeFile: function(){
-            var that = this;
-            var shpFile = new L.Shapefile('public/javascripts/lga2017.zip', {
-                // onEachFeature: function (feature, layer) {
-                //     // if (feature.properties) {
-                //     //     var suburbmapdata = getInfoFrom(Object, feature).join(" <br/>");
-                //     //     layer.bindPopup(suburbmapdata);
-                //     //     if (feature.properties.sentimentDensity) {
-                //     //         that.incomeVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.tot_tot});
-                //     //         that.occupationVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_p_tot});
-                //     //         that.immigrantsVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_tot_p_});
-                //     //         that.homelessPeopleVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_hl_p_h});
-                //     //     }
-                //     // }
-                //     layer.on({
-                //         //mouseover: highlightFeature,
-                //         //mouseout: resetHighlight
-                //     });
-                // },
+            let that = this;
+            this.regionList = [];
+            let shpFile = new L.Shapefile('public/javascripts/lga2017.zip', {
+                onEachFeature: function (feature, layer) {
+                    if (feature.properties) {
+                        console.log('feature properties');
+                        let area_code = feature.properties.lga_code16;
+                        let area_name = feature.properties.lga_name16;
+                        that.regionList.push({"code": feature.properties.lga_code16,"name":feature.properties.lga_name16});
+                        $("#regionSelect").append("<option value='"+area_code+"'>" + area_name + "</option>");
+                        // var suburbmapdata = getInfoFrom(Object, feature).join(" <br/>");
+                        // layer.bindPopup(suburbmapdata);
+                        // if (feature.properties.sentimentDensity) {
+                        //     that.incomeVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.tot_tot});
+                        //     that.occupationVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_p_tot});
+                        //     that.immigrantsVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_tot_p_});
+                        //     that.homelessPeopleVsSentiment.push({x:feature.properties.sentimentDensity, y:feature.properties.M0_hl_p_h});
+                        // }
+                    }
+                    // layer.on({
+                    //     //mouseover: highlightFeature,
+                    //     //mouseout: resetHighlight
+                    // });
+                },
                 // style: function (feature) {
                 //     if (feature.properties.sentimentDensity === undefined) {
                 //         feature.properties.sentimentDensity = that.getSentimentDensity(feature.properties.sa2_main16);
@@ -76,10 +88,10 @@ $(function() {
                 //     };
                 // }
             });
-            shpFile.addTo(that.map);
+
             return shpFile;
         }
-    }
+    };
     $('#visualizationType').change(function (evt) {
         that.visualizationOption = this.value;
     });
@@ -115,4 +127,6 @@ $(function() {
         console.log('ax');
         appController.loadVisualization(that.visualizationOption);
     }
+
+    $('.combobox').combobox();
 });

@@ -28,6 +28,7 @@ var mongoDb = {
           })
       },
       getDocuments: function(collectionName,searchParams,res){
+          //this.getIndex("DEE",collectionName);
           let cursor = airpollutionDb.collection(collectionName).find({}).toArray(function(err, docs){
               if(docs) {
                   res.send(docs);
@@ -37,8 +38,27 @@ var mongoDb = {
               }
           });
       },
-      getIndex: function(indexName){
+      getFilteredDocuments: function(searchQuery, collectionName,res){
+          let searchObject = {};
+          let cursor = airpollutionDb.collection(collectionName).find(searchObject).toArray(function(err, docs){
+              if(docs) {
+                  res.send(docs);
+              }else{
+                  let error = {message: "No documents found"};
+                  res.send(error);
+              }
+          });
+      },
+      getIndex: function(indexName,collectionName){
+          airpollutionDb.collection(collectionName).indexes().then(indexes => {
+              console.log("indexes:", indexes);
+              // ...
+          })
 
+          let y =airpollutionDb.collection(collectionName).indexInformation({full:true}).then(indexes => {
+              console.log("indexes:", indexes);
+              // ...
+          })
       }
 };
 
@@ -52,11 +72,11 @@ router.get('/', function(req,res,next){
 });
 
 router.get('/getEmissionData',function(req,res,next){
-    let collection_object = mongoDb.returnCollection("PHIDU2016Collection");
-
-    let collectionList = [];
+    let collection_object = mongoDb.returnCollection("DEESubstances");
+    let collectionList = ["DEESubstances"];
     collectionList.push(collection_object);
     mongoDb.getDocuments(collection_object[0].name,collectionList, res);
+    //mongoDb.getIndex("SubstanceWithThreshold","DEESubstances")
 });
 
 module.exports = router;

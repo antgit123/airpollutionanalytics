@@ -95,10 +95,10 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
     airMeasurementData= requests.get(query).json()
     airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
     if isWindIndicator:
-        airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'],
+        airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'][:-8],
                                      x['DateTimeStart'], float(x['Value']), x['Latitude'], x['Longitude']))
     else:
-        airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'],
+        airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (x['DateTimeStart'][:-8],
                                 x['DateTimeStart'], float(x['AQIIndex']),float(x['Value']), x['Latitude'], x['Longitude']))
     # if measurementIndicator == 'Value':
     # airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (siteId, monitorId, x['DateTimeStart'],x['AQIIndex']))

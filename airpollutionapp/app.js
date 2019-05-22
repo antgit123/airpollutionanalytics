@@ -8,6 +8,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var visualizationRouter = require('./routes/visualization');
 var app = express();
+app.use("/public", express.static(__dirname + "/public"));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

@@ -10,11 +10,23 @@ block content
                     div.form-group
                         label(for="substanceSelect") Select Substance:
                         select#substanceSelect.form-control
-                            option Select Substance
+                            option(value="selectSubstance") Select Substance
                     div.form-group
                         label(for="regionSelect") Select Region:
                         select#regionSelect.form-control
-                            option Select Region
+                            option(value="selectRegion")
+                    div.form-group
+                        label(for="yearSelect") Select Year:
+                        select#yearSelect.form-control.combobox
+                            option(value="selectYear") Select Year
+                            option(value="2015") 2015
+                            option(value="2015") 2016
+                            option(value="2015") 2017
+                            option(value="2015") 2018
+                    div.form-group
+                        label(for="heatMapSelector") Select choropleth parameter:
+                        select#heatMapSelector.form-control
+                            option(value="selectChoropleth") Select parameter
                     div.form-group
                         button#submitOptions.btn-info.btn-lg Set Parameters
             //for visualization area
