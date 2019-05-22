@@ -9,7 +9,7 @@ def main():
     conf = SparkConf().setAppName("scatsProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 
     sc = SparkContext(conf = conf)
-    sc.setCheckpointDir("hdfs://45.113.232.133:9000/Processed2014Checkpoint")
+    sc.setCheckpointDir("hdfs://45.113.232.133:9000/Checkpoint")
     sqlContext = SQLContext(sc)
     sqlContext.setConf('spark.sql.shuffle.partitions', '10')
     year = sys.argv[1]
