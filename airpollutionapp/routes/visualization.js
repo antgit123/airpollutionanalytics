@@ -76,7 +76,13 @@ router.get('/', function(req,res,next){
     if(dbCollectionList === undefined) {
         mongoDb.getCollections();
     }
-    res.render('visualization',{type: req.query.type});
+
+    if(req.query.type === 'scats') {
+        res.render('scats');
+    } else {
+        res.render('visualization',{type: req.query.type});
+    }
+
 });
 
 router.get('/getEmissionData',function(req,res,next){

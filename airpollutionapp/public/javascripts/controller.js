@@ -279,10 +279,11 @@ $(function() {
         }
     });
 
-    if(window.location.pathname === '/visualization') {
-        console.log('ax');
-        appController.loadVisualization(that.visualizationOption);
-    }
+
+    // if(window.location.pathname === '/visualization') {
+    //     console.log('ax');
+    //     appController.loadVisualization(that.visualizationOption);
+    // }
 
     $('.combobox').combobox();
 });
