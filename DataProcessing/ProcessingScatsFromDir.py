@@ -54,7 +54,10 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath,
     finalDf = finalDf.checkpoint(eager=True)
 
     todaydate = year+'/01/01 '
-    finalDf = finalDf.withColumn('DateTime',
-                                 func.to_timestamp(func.concat(func.lit(todaydate), finalDf['Range']), "yyyy/MM/dd HH"))
+    try:
+        finalDf = finalDf.withColumn('DateTime',
+                                     func.to_timestamp(func.concat(func.lit(todaydate), finalDf['Range']), "yyyy/MM/dd HH"))
+    except AttributeError:
+        print()
     scatsDf = finalDf.checkpoint(eager=True)
     return scatsDf
