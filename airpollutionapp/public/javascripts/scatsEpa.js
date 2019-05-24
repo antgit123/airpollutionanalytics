@@ -15,8 +15,7 @@ $(function(){
                 let epaStyleForMonitorId = scatsEpaConstants.getstyleForMonitorId(monitorId);
                 that.removeAllMapLayers(that.map);
                 that.addEpaLayer(year, monitorId);
-
-                // that.addScatsLayer(year);
+                that.addScatsLayer(year);
             });
         },
 
@@ -66,9 +65,8 @@ $(function(){
             let WMSUrl = "http://45.113.234.120:8080/geoserver/airpollution/wms/";
             let wmsEPALayer  = L.tileLayer.wms(WMSUrl, {
                 cql_filter: "monitorId='" + monitorId +"'",
-                layers: 'airpollution:epa_2014',
+                layers: 'airpollution:epa_' + year,
                 styles: 'EPAStyleCircle'+monitorId,
-                // styles: 'EpaStyle',
                 format: 'image/png',
                 transparent: true
             });
