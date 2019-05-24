@@ -162,13 +162,16 @@ startdate = sys.argv[1]
 enddate = sys.argv[2]
 year = sys.argv[3]
 stationName = ""
-stationData = "";
+stationData = ""
 for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect():
     monitorId = airIndicatorRecord[0]
     for sites in airIndicatorRecord[1]:
         stationData = getStationName(sites['site'])
-        if stationData is not None:
-            stationName = stationData['Station']
+        try:
+            if stationData is not None:
+                stationName = stationData['Station']
+        except TypeError:
+            print()
         if monitorId in wind_indicators:
             # airQualityWindData.append(getAirQualityAggregateMeasurements('2018010100','2019010100','2018',typeOfMeasurement,monitorId,sites['site'], True))
             getAirQualityAggregateMeasurements(startdate,enddate,year,typeOfMeasurement,monitorId,sites['site'], stationName, True,final_Wind_Result['Features'])
