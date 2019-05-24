@@ -8,9 +8,10 @@ block content
             div.col-3
                 h3 Select Map Parameters
                 div.form-group
-                    label(for="yearSelect") Select Year:
-                    select#yearSelect.form-control.custom-select
+                    label(for="yearSelectForScatsEpa") Select Year:
+                    select#yearSelectForScatsEpa.form-control.custom-select
                         option(selected=true value="selectYear") Select Year
+                        option(value="2014") 2014
                         option(value="2015") 2015
                         option(value="2016") 2016
                         option(value="2017") 2017
@@ -24,7 +25,7 @@ block content
                     select#epaStationSelect.form-control
                         option(value="selectEPAStation")
                 div.form-group
-                    button#submitOptionsForScats.btn-info.btn-lg Set Parameters
+                    button#submitOptionsForScatsEpa.btn-info.btn-lg Set Parameters
             //for visualization area
             div.col-9
                 div#scatsEpaMapid

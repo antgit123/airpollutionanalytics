@@ -141,4 +141,10 @@ router.get('/getFilteredEmissionData', function(req,res,next){
     });
 });
 
+router.get('/getMonitorData',function(req,res,next){
+    let collection_object = mongoDb.returnCollection("DEESubstances");
+    let collectionList = ["DEESubstances"];
+    collectionList.push(collection_object);
+    mongoDb.getDocuments(collection_object[0].name,collectionList, res);
+});
 module.exports = router;
