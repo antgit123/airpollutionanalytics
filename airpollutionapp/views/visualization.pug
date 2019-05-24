@@ -17,16 +17,16 @@ block content
                             option(value="selectRegion")
                     div.form-group
                         label(for="yearSelect") Select Year:
-                        select#yearSelect.form-control.combobox
-                            option(value="selectYear") Select Year
+                        select#yearSelect.form-control.custom-select
+                            option(selected=true value="selectYear") Select Year
                             option(value="2015") 2015
-                            option(value="2015") 2016
-                            option(value="2015") 2017
-                            option(value="2015") 2018
+                            option(value="2016") 2016
+                            option(value="2017") 2017
+                            option(value="2018") 2018
                     div.form-group
                         label(for="heatMapSelector") Select choropleth parameter:
                         select#heatMapSelector.form-control
-                            option(value="selectChoropleth") Select parameter
+                            //option(value="selectChoropleth") Select parameter
                     div.form-group
                         button#submitOptions.btn-info.btn-lg Set Parameters
             //for visualization area
@@ -35,3 +35,15 @@ block content
         div.row
             div.col-3
             div.col-9
+
+    //for error and validation
+    div#alert-modal.modal.fade
+        div.modal-dialog
+            div.modal-content
+                div.modal-header
+                    button.close(type="button" data-dismiss="modal" aria-label="Close")
+                        span(aria-hidden="true")
+                    h4#alert-modal-title.modal-title.left
+                div#alert-modal-body.modal-body
+                div.modal-footer
+                    button.btn.btn-primary(type="button" data-dismiss="modal") Close
