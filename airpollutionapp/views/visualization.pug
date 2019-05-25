@@ -39,10 +39,19 @@ block content
             //for visualization area
             div.col-9
                 div#mapid
-        div.row
-            div.col-3
-            div.col-9
-
+        div.container
+            div.row
+                div.col-3
+                div.col-9
+                    div.d-inline
+                        h6 Selected Region:
+                        span#selectedRegionText
+                    div.d-inline
+                        h6 Selected Substance:
+                        span#selectedSubstanceText
+            div.row
+                div.col-6
+                    div#trendsChart
     //for error and validation
     div#alert-modal.modal.fade
         div.modal-dialog

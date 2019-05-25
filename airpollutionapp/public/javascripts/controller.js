@@ -37,7 +37,9 @@ $(function () {
 
             $('#submitOptions').on('click', () => {
                 let substance = $("#substanceSelect")[0].value;
+                $('#selectedSubstanceText')[0].innerText = substance;
                 let region = $("#regionSelect")[0].value;
+                $('#selectedRegionText')[0].innerText = region;
                 let year = $("#yearSelect")[0].value;
                 let choroplethParameter = $("#heatMapSelector")[0].value;
                 that.optionMap = new Map();
@@ -211,9 +213,10 @@ $(function () {
                 $('#searchOption').click(function () {
                     if (!$(this).is(':checked')) {
                         //write logic to remove search bar
+                        that.map.removeControl(that.searchControl);
                     }else{
                         that.searchMarkersLayer= new L.LayerGroup(that.searchRegionData);
-                        let searchControl = new L.Control.Search({
+                        that.searchControl = new L.Control.Search({
                             layer: that.searchMarkersLayer,
                             initial: false,
                             propertyName: name_key,
@@ -221,12 +224,12 @@ $(function () {
                             marker: false,
                             zoom: 10
                         });
-                        that.map.addControl(searchControl);
+                        that.map.addControl(that.searchControl);
                     }
                 });
 
                 $('#showBusinessContainer').show();
-                //$('#searchContainer').show();
+                // $('#searchContainer').show();
                 phidu_key === undefined ? that.phidu_data = undefined : that.phidu_data = response[phidu_key];
                 //potential delete
                 if (that.phidu_data !== undefined) {
@@ -345,6 +348,7 @@ $(function () {
                 let code = parseInt(year) >= 2017 ? feature.properties.lga_code16 : feature.properties.lga_code;
                 let name = parseInt(year) >= 2017 ? feature.properties.lga_name16 : feature.properties.lga_name;
                 getLayerInfo(code, name, that, year, layer.layer);
+                that.createChart();
             });
 
             function getLayerInfo(code, name, appObject, year, layer) {
@@ -531,6 +535,26 @@ $(function () {
                 this.removeMapLayer(this.businessMarkerLayerGroup);
             }
         },
+
+        createChart: function(){
+            var trace1 = {
+                x: [1, 2, 3, 4],
+                y: [10, 15, 13, 17],
+                type: 'scatter'
+            };
+
+            var trace2 = {
+                x: [1, 2, 3, 4],
+                y: [16, 5, 11, 9],
+                type: 'scatter'
+            };
+
+            var data = [trace1, trace2];
+            let layout = {
+                title: "Region Trends Chart"
+            }
+            Plotly.newPlot('trendsChart', data,layout);
+        }
     };
     let that = this;
 

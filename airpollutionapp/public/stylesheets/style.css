@@ -80,3 +80,6 @@ a {
   width: 20px;
 }
 
+.chart-visualization-container{
+  border: 2px solid lightgray;
+}
