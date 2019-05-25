@@ -22,21 +22,9 @@ def main():
 
     todaydate = year+'/01/01 '
     finalDf = scatsDf.withColumn('DateTime',
-                                 func.to_timestamp(func.concat(func.lit(todaydate), scatsDf['Range']), "yyyy/MM/dd HH"))
+                                 func.unix_timestamp(func.concat(func.lit(todaydate), scatsDf['Range']), "yyyy/MM/dd HH").cast("timestamp"))
     scatsDf = finalDf.checkpoint(eager=True)
-
-    # todaydate = '2018-01-01 '
-    # scatsDf = scatsDf.withColumn('date', func.lit(todaydate))
-    #
-    # scatsDf = scatsDf.withColumn('DateTime',
-    #                                          func.to_timestamp(
-    #                                              func.concat(scatsDf['date'],
-    #                                                          scatsDf['Range']), "yyyy-MM-dd HH"))
-
-    scatsDf.show()
-    # scatsDf = scatsDf.withColumn('DateTime', func.to_timestamp(func.concat(func.lit(todaydate), scatsDf['Range']), "yyyy/MM/dd HH"))
     scatsDf = scatsDf.checkpoint(eager=True)
-    # sqlContext.clearCache()
     scatsDf.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save(processed_data_filepath)
 
 main()
