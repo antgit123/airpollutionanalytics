@@ -9,14 +9,36 @@ $(function(){
                 $("#monitorSelect").append("<option value='"+key+"'>" + monitorList[key] + "</option>");
             });
 
+            // let featureInfoUrl = 'http://45.113.234.120:8080/geoserver/airpollution/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&FORMAT=image%2Fpng&TRANSPARENT=true&QUERY_LAYERS=airpollution%3Aepa_2018&STYLES&LAYERS=airpollution%3Aepa_2018&INFO_FORMAT=application%2Fjson&FEATURE_COUNT=50&X=50&Y=50&SRS=EPSG%3A4326&WIDTH=101&HEIGHT=101&BBOX=145.04974365234375%2C-38.054809682071216%2C145.60455322265625%2C-37.500000111758716';
+            // $.ajax({
+            //     type: "GET",
+            //     url: featureInfoUrl,
+            //     contentType: 'application/json',
+            //     success: function (response) {
+            //         alert(response);
+            //     },
+            //     error: function () {
+            //         alert("response fail");
+            //     }
+            // });
+
             $('#submitOptionsForScatsEpa').on('click',()=>{
                 let monitorId = $("#monitorSelect")[0].value;
                 let year = $("#yearSelectForScatsEpa")[0].value;
                 let epaStyleForMonitorId = scatsEpaConstants.getstyleForMonitorId(monitorId);
                 that.removeAllMapLayers(that.map);
+                that.updateTimeOptions(that.map, year);
                 that.addEpaLayer(year, monitorId);
                 that.addScatsLayer(year);
             });
+        },
+
+        updateTimeOptions: function(map, year) {
+            var testoptions = {
+                timeInterval: year+'-01-01T00:00:00.0Z/' + year + '-01-01T23:59:59.999Z',
+                period: "PT1H"
+            };
+            map.timeDimension.initialize(testoptions)
         },
 
         getMap: function () {
@@ -26,7 +48,7 @@ $(function(){
                 timeDimension: true,
                 timeDimensionControl: true,
                 timeDimensionOptions: {
-                    timeInterval: "2018-01-01T00:00:00.0Z/2018-01-01T23:59:59.999Z",
+                    timeInterval: '2018-01-01T00:00:00.0Z/2018-01-01T23:59:59.999Z',
                     period: "PT1H"
                 },
                 center: [-37.814, 144.96332],
@@ -66,13 +88,13 @@ $(function(){
             let wmsEPALayer  = L.tileLayer.wms(WMSUrl, {
                 cql_filter: "monitorId='" + monitorId +"'",
                 layers: 'airpollution:epa_' + year,
-                styles: 'EPAStyleCircle'+monitorId,
+                // styles: 'EPAStyleCircle'+monitorId,
                 format: 'image/png',
+                styles: 'EPAStyleCircleBPM2.5',
                 transparent: true
             });
 
             var wmsTimeLayer = L.timeDimension.layer.wms(wmsEPALayer, {
-                updateTimeDimension: true,
                 msVersion: '1.1.0',
                 proxy: proxy
             });
@@ -85,7 +107,7 @@ $(function(){
             let WMSUrl = "http://45.113.234.120:8080/geoserver/airpollution/wms/";
 
             let wmsScatsLayer  = L.tileLayer.wms(WMSUrl, {
-                layers: 'airpollution:ScatsDateTime',
+                layers: 'airpollution:scats'+year,
                 format: 'image/png',
                 transparent: true
             });
