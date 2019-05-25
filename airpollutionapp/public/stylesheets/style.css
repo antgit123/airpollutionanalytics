@@ -69,6 +69,12 @@ a {
 }
 
 #showBusinessOption {
+   margin-left: 10px;
+   height: 20px;
+   width: 20px;
+}
+
+#searchOption {
   margin-left: 10px;
   height: 20px;
   width: 20px;

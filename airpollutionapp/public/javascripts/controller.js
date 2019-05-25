@@ -6,6 +6,7 @@ $(function () {
             this.map = this.getMap(undefined);
             $('#choroplethContainer').hide();
             $('#showBusinessContainer').hide();
+            $('#searchContainer').hide();
             this.substanceList = [];
             this.phiduReferenceMap = {
                 "respiratory": ["respiratory_admissions", "Number of Respiratory admissions"],
@@ -122,6 +123,7 @@ $(function () {
                 .set("isch_heart", "Ischaemic heart admissions")
                 .set("stroke", "Stroke admissions")
                 .set("copd", "COPD admissions");
+
             $("#heatMapSelector").append("<option value='selectChoropleth'>Select Parameter</option>");
             parameters.forEach(parameter => {
                 $('#heatMapSelector').append("<option value='" + parameter + "'>" + choroplethMap.get(parameter) + "</option>")
@@ -172,7 +174,7 @@ $(function () {
             this.regionList = [];
             this.regionCodeList = [];
             this.businessMarkerLayerGroup = [];
-            this.searchRegionData = [];
+            this.searchRegionData= [];
             this.businessMarker = L.AwesomeMarkers.icon({
                 icon: 'briefcase',
                 markerColor: 'black',
@@ -206,8 +208,27 @@ $(function () {
                     }
                 });
 
+                $('#searchOption').click(function () {
+                    if (!$(this).is(':checked')) {
+                        //write logic to remove search bar
+                    }else{
+                        that.searchMarkersLayer= new L.LayerGroup(that.searchRegionData);
+                        let searchControl = new L.Control.Search({
+                            layer: that.searchMarkersLayer,
+                            initial: false,
+                            propertyName: name_key,
+                            position: 'topright',
+                            marker: false,
+                            zoom: 10
+                        });
+                        that.map.addControl(searchControl);
+                    }
+                });
+
                 $('#showBusinessContainer').show();
+                //$('#searchContainer').show();
                 phidu_key === undefined ? that.phidu_data = undefined : that.phidu_data = response[phidu_key];
+                //potential delete
                 if (that.phidu_data !== undefined) {
                     that.phidu_sorted_data = response[phidu_key].sort((a, b) => (a[area_name] > b[area_name]) ? 1 :
                         ((b[area_name] > a[area_name]) ? -1 : 0));
@@ -318,19 +339,6 @@ $(function () {
             });
 
             that.shpFile.addTo(that.map);
-            if(response){
-                that.searchMarkersLayer= new L.LayerGroup(that.searchRegionData);
-                let searchControl = new L.Control.Search({
-                    layer: that.searchMarkersLayer,
-                    initial: false,
-                    propertyName: name_key,
-                    position: 'topright',
-                    marker: false,
-                    zoom: 12
-                });
-
-                that.map.addControl(searchControl);
-            }
 
             this.shpFile.on('click', function (layer) {
                 let feature = layer.layer.feature;
