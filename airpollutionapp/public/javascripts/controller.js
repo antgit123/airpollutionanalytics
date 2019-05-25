@@ -30,8 +30,7 @@ $(function () {
                             id: substanceId,
                             threshold: substanceThreshold
                         });
-
-                    })
+                    });
                 },
             });
 
@@ -173,6 +172,7 @@ $(function () {
             this.regionList = [];
             this.regionCodeList = [];
             this.businessMarkerLayerGroup = [];
+            this.searchRegionData = [];
             this.businessMarker = L.AwesomeMarkers.icon({
                 icon: 'briefcase',
                 markerColor: 'black',
@@ -233,6 +233,9 @@ $(function () {
                         area_code = feature.properties[code_key];
                         area_name = feature.properties[name_key];
                         that.regionList.push({"code": area_code, "name": area_name});
+                        if(that.regionCodeList.includes(feature.properties[code_key])){
+                            that.searchRegionData.push(new L.GeoJSON(feature));
+                        }
                         $("#regionSelect").append("<option value='" + area_code + "'>" + area_name + "</option>");
                     }
                     layer.on({
@@ -315,6 +318,20 @@ $(function () {
             });
 
             that.shpFile.addTo(that.map);
+            if(response){
+                that.searchMarkersLayer= new L.LayerGroup(that.searchRegionData);
+                let searchControl = new L.Control.Search({
+                    layer: that.searchMarkersLayer,
+                    initial: false,
+                    propertyName: name_key,
+                    position: 'topright',
+                    marker: false,
+                    zoom: 12
+                });
+
+                that.map.addControl(searchControl);
+            }
+
             this.shpFile.on('click', function (layer) {
                 let feature = layer.layer.feature;
                 let code = parseInt(year) >= 2017 ? feature.properties.lga_code16 : feature.properties.lga_code;
@@ -525,6 +542,4 @@ $(function () {
         console.log('ax');
         appController.loadVisualization(that.visualizationOption);
     }
-
-    $('.combobox').combobox();
 });
