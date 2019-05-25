@@ -4,6 +4,8 @@ $(function () {
         loadVisualization: function (visualizationOption) {
             let that = this;
             this.map = this.getMap(undefined);
+            $('#choroplethContainer').hide();
+            $('#showBusinessContainer').hide();
             this.substanceList = [];
             this.phiduReferenceMap = {
                 "respiratory": ["respiratory_admissions", "Number of Respiratory admissions"],
@@ -64,6 +66,7 @@ $(function () {
             });
 
             $('#yearSelect').on('change', (evt) => {
+                $('#choroplethContainer').show();
                 let year = $('#yearSelect')[0].value;
                 switch (year) {
                     case '2015':
@@ -169,6 +172,12 @@ $(function () {
             let that = this;
             this.regionList = [];
             this.regionCodeList = [];
+            this.businessMarkerLayerGroup = [];
+            this.businessMarker = L.AwesomeMarkers.icon({
+                icon: 'briefcase',
+                markerColor: 'black',
+                prefix: 'fa'
+            });
             this.legendAdded = false;
             $('.info').remove();
             let year = '2018';
@@ -189,11 +198,21 @@ $(function () {
                     }
                 });
 
+                $('#showBusinessOption').click(function () {
+                    if (!$(this).is(':checked')) {
+                        that.handleLayers("remove");
+                    }else{
+                        that.handleLayers("add");
+                    }
+                });
+
+                $('#showBusinessContainer').show();
                 phidu_key === undefined ? that.phidu_data = undefined : that.phidu_data = response[phidu_key];
                 if (that.phidu_data !== undefined) {
                     that.phidu_sorted_data = response[phidu_key].sort((a, b) => (a[area_name] > b[area_name]) ? 1 :
                         ((b[area_name] > a[area_name]) ? -1 : 0));
                 }
+                that.createBusinessLayerGroup();
             }
 
             document.getElementById('regionSelect').innerHTML = "";
@@ -223,8 +242,6 @@ $(function () {
                 },
                 style: function (feature) {
                     let currentEmission, currentAdmissionValue, styleValue;
-
-                    // console.log('called style');
                     if (choroplethParameter) {
                         if (choroplethParameter !== 'emission') {
                             let year = that.optionMap.get("year");
@@ -310,20 +327,20 @@ $(function () {
                 let viz_layer = layer;
                 let total_Quantity = 0, items = 0;
                 let substance = appObject.optionMap.get("substance");
-                info.push("Area Name:" + name);
+                info.push("<b>Area Name:</b>" + name);
                 let choroplethParameter = appObject.optionMap.get("choroplethParameter");
                 if (choroplethParameter !== 'emission') {
                     if (year === '2015' || year === '2017') {
                         let admissionValueList = appObject.getAdmissionValues(code, year);
                         admissionValueList.forEach((value, key) => {
-                            info.push(key + ':' + value);
+                            info.push("<b>"+key + ':</b>' + value);
                         })
                     }
                 } else {
                     let admissionValueList = appObject.getAdmissionValues(code, year);
                     if (admissionValueList) {
                         admissionValueList.forEach((value, key) => {
-                            info.push(key + ':' + value);
+                            info.push("<b>"+key + ':</b>' + value);
                         });
                     }
                 }
@@ -342,12 +359,12 @@ $(function () {
                                 items++;
                             });
                             if (items === substanceResponse['data'].length) {
-                                info.push("Total Emission (in Kg):" + total_Quantity);
+                                info.push("<b>Total Emission (in Kg): </b>" + total_Quantity);
                                 viz_layer.bindPopup(info.join(" <br/>"));
                             }
                         } else {
                             //no data found which means region doesn't have any emission of that substance
-                            info.push("Total Emission (in Kg):" + total_Quantity);
+                            info.push("<b>Total Emission (in Kg):</b>" + total_Quantity);
                             viz_layer.bindPopup(info.join(" <br/>"));
                         }
                     },
@@ -462,6 +479,32 @@ $(function () {
                 return div;
             };
             this.legend.addTo(this.map);
+        },
+
+        createBusinessLayerGroup: function () {
+            let that = this;
+            let businessMarkers = [];
+            this.sortedBusinessList.forEach(business =>{
+                let latitude = parseFloat(business['site_latitude']);
+                let longitude = parseFloat(business['site_longitude']);
+                let businessInfo = "<b>Name" + ":</b>" + business["facility_name"] + "</br>" +
+                   "<b>Activity:</b> "+ business["main_activities"] + "</br>" +
+                   "<b>Suburb:</b>"+ business["site_address_suburb"] + "</br>" +
+                   "<b>Total Emission (in Kg): </b>"+ business.emissionData["quantity_in_kg"];
+                let marker = L.marker([latitude,longitude],
+                    {icon: that.businessMarker}
+                ).bindPopup(businessInfo);
+                businessMarkers.push(marker);
+            });
+            that.businessMarkerLayerGroup = L.layerGroup(businessMarkers);
+        },
+
+        handleLayers:function(operation){
+            if(operation === "add") {
+                this.addLayerToMap(this.businessMarkerLayerGroup);
+            }else{
+                this.removeMapLayer(this.businessMarkerLayerGroup);
+            }
         },
     };
     let that = this;

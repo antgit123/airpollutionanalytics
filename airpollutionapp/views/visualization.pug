@@ -23,10 +23,13 @@ block content
                             option(value="2016") 2016
                             option(value="2017") 2017
                             option(value="2018") 2018
-                    div.form-group
+                    div#choroplethContainer.form-group
                         label(for="heatMapSelector") Select map choropleth parameter:
                         select#heatMapSelector.form-control
                             //option(value="selectChoropleth") Select parameter
+                    div#showBusinessContainer.form-group
+                        label.form-check-label(for="showBusinessOption") Show Businesses:
+                        input#showBusinessOption.form-check-input.business-checkbox(type="checkbox" value="no")
                     div.form-group
                         button#submitOptions.btn-info.btn-lg Set Parameters
             //for visualization area
