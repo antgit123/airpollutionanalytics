@@ -169,6 +169,8 @@ $(function () {
             let that = this;
             this.regionList = [];
             this.regionCodeList = [];
+            this.legendAdded = false;
+            $('.info').remove();
             let year = '2018';
             let choroplethParameter;
             let area_code, area_name;
@@ -211,7 +213,6 @@ $(function () {
                     if (feature.properties) {
                         area_code = feature.properties[code_key];
                         area_name = feature.properties[name_key];
-                        console.log("called on each feature");
                         that.regionList.push({"code": area_code, "name": area_name});
                         $("#regionSelect").append("<option value='" + area_code + "'>" + area_name + "</option>");
                     }
@@ -221,7 +222,8 @@ $(function () {
                     });
                 },
                 style: function (feature) {
-                    let max_value, min_value, currentEmission, currentAdmissionValue, styleValue;
+                    let currentEmission, currentAdmissionValue, styleValue;
+
                     // console.log('called style');
                     if (choroplethParameter) {
                         if (choroplethParameter !== 'emission') {
@@ -229,12 +231,19 @@ $(function () {
                             let code = parseInt(year) >= 2017 ? "lga_code16" : "lga_code";
                             let key = that.phiduReferenceMap[choroplethParameter][0];
                             if (that.phidu_data.length > 0) {
-                                max_value = that.phidu_data[0][key];
-                                min_value = that.phidu_data[that.phidu_data.length - 1][key];
+                                that.max = that.phidu_data[0][key];
+                                that.min = that.phidu_data[that.phidu_data.length - 1][key];
+                                if(that.min === null){
+                                    that.min = 0;
+                                }
+                                if(!that.legendAdded) {
+                                    that.addLegend();
+                                }
                                 let currentRegion = that.phidu_data.filter(region => {
                                     return region["lga_code"] === feature.properties[code];
                                 });
                                 currentAdmissionValue = currentRegion[0][key];
+                                that.legendAdded = true;
                             }
 
                         } else {
@@ -242,11 +251,18 @@ $(function () {
                             let no_business = that.sortedBusinessList.length;
                             let code = parseInt(year) >= 2017 ? "lga_code16" : "lga_code";
                             if (no_business > 0) {
-                                max_value = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
-                                min_value = that.sortedBusinessList[no_business - 1].emissionData['quantity_in_kg'];
+                                that.max = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
+                                that.min = that.sortedBusinessList[no_business - 1].emissionData['quantity_in_kg'];
+                                if(that.min === null){
+                                    that.min = 0;
+                                }
+                                if(!that.legendAdded) {
+                                    that.addLegend();
+                                }
                                 let currentBusiness = that.sortedBusinessList.filter(business => {
                                     return business["location"] === feature.properties[code]
                                 });
+                                that.legendAdded = true;
                                 if (currentBusiness && currentBusiness.length > 0) {
                                     let totalQuantity = 0;
                                     currentBusiness.forEach(business =>{
@@ -270,7 +286,7 @@ $(function () {
                         }
                         styleValue =choroplethParameter === "emission"? currentEmission: currentAdmissionValue;
                         return {
-                            fillColor: that.getColor(styleValue, min_value, max_value),
+                            fillColor: that.getColor(styleValue, that.min, that.max),
                             weight: 1,
                             opacity: 1,
                             color: 'black',
@@ -429,18 +445,18 @@ $(function () {
         },
 
         addLegend: function () {
-            var that = this;
+            let that = this;
             this.legend = L.control({position: 'bottomright'});
             this.legend.onAdd = function (map) {
-                var div = L.DomUtil.create('div', 'info legend'),
+                let div = L.DomUtil.create('div', 'info legend'),
                     range = (that.max - that.min) / 5;
                 grades = [that.min, that.max - (4 * range), that.max - (3 * range),
                     that.max - (2 * range), that.max - range, that.max],
                     labels = [];
                 // loop through our density intervals and generate a label with a colored square for each interval
-                for (var i = 0; i < grades.length - 1; i++) {
+                for (let i = 0; i < grades.length - 1; i++) {
                     div.innerHTML +=
-                        '<i style="background:' + that.getColor(grades[i] + 0.01) + ' "></i> ' +
+                        '<i style="background:' + that.getColor(grades[i] + 0.01,that.min,that.max) + ' "></i> ' +
                         grades[i].toFixed(2) + ' - ' + grades[i + 1].toFixed(2) + '<br>';
                 }
                 return div;
