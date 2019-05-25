@@ -9,15 +9,12 @@ let dbCollectionList;
 let airpollutionDb;
 let collectionMap = new Map();
 
-var mongoDb = {
+let mongoDb = {
       getCollections: function() {
           mongoClient.connect(url, function (err, client) {
               airpollutionDb = client.db(dbName);
-              console.log('database', airpollutionDb);
               airpollutionDb.listCollections().toArray((err, collections) => {
-                  // assert.equal(err, null);
                   dbCollectionList = collections;
-                  console.log("done");
                   return collections;
               });
           });
@@ -65,8 +62,8 @@ var mongoDb = {
           });
           return map;
       },
-      filterClusterCollection: function(clusterData){
-
+      performAggregation: function(collectionName, aggregateArray){
+          return airpollutionDb.collection(collectionName).aggregate(aggregateArray);
       }
 };
 
@@ -93,17 +90,30 @@ router.get('/getFilteredEmissionData', function(req,res,next){
     let queryPromise =[];
     let collectionList = [];
     let year = queryMap.get("year");
+    let substance = queryMap.get("substance");
+    let agg =  [
+        { $unwind: '$emissionData' },
+        {
+            $match: {
+                'emissionData.substance': substance
+            }
+        },
+        {
+            $sort: {
+                'emissionData.quantity_in_kg': -1
+            }
+        }
+    ];
     if(year === '2015' || year === '2017'){
         let phidu_collectionName = "PHIDU"+year+"Collection";
-        //let dee_clusterCollection = "Cluster"+year+"Collection";
         collectionList.push(phidu_collectionName);
-        //collectionList.push(dee_clusterCollection);
     }
-    let dee_collectionName = "DEE"+queryMap.get("year")+"Collection";
+    let dee_collectionName = "DEE"+year+"Collection";
     collectionList.push(dee_collectionName);
     collectionList.forEach(collection=>{
         if(collection.indexOf('DEE') !== -1){
-            queryPromise.push(mongoDb.getFilteredDocuments(collection, {'emissionData.substance':queryMap.get("substance")}));
+            //queryPromise.push(mongoDb.getFilteredDocuments(collection, {'emissionData.substance':queryMap.get("substance")}));
+            queryPromise.push(mongoDb.performAggregation(collection,agg));
         }else {
             queryPromise.push(mongoDb.getFilteredDocuments(collection, {}));
         }
@@ -114,7 +124,7 @@ router.get('/getFilteredEmissionData', function(req,res,next){
     Promise.all(queryPromise).then(collectionValues =>{
         collectionValues.forEach(collectionValue =>{
             let namespace = collectionValue.ns.split(".")[1];
-            collectionValue.toArray((body, docs, error)=>{
+            collectionValue.toArray((error, docs)=>{
                 if (docs){
                     if(namespace.indexOf("PHIDU") !== -1) {
                         selector === "emission" ? response[namespace] = docs : response[namespace] = docs[0][selector];
@@ -132,6 +142,64 @@ router.get('/getFilteredEmissionData', function(req,res,next){
                 }
             })
         })
+    });
+});
+
+router.get('/getSortedBusinessList', (req,res,next)=>{
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let year = queryMap.get("year");
+    let substance = queryMap.get("substance");
+    let dee_collection = "DEE"+year+"Collection";
+    let response ={};
+    let agg =  [
+        { $unwind: '$emissionData' },
+        {
+            $match: {
+                'emissionData.substance': substance
+            }
+        },
+        {
+            $sort: {
+                'emissionData.quantity_in_kg': -1
+            }
+        }
+    ];
+
+    let mongoPromise = mongoDb.performAggregation(dee_collection,agg);
+    mongoPromise.toArray((error,docs) =>{
+        if(docs){
+            response['data'] = docs;
+            res.send(response);
+        }
+    })
+});
+
+router.get('/getRegionEmissionData', (req,res,next)=>{
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let year = queryMap.get("year");
+    let area_code = queryMap.get("region");
+    let substance = queryMap.get("substance");
+    let dee_collection = "DEE"+year+"Collection";
+    let filter_criteria;
+    if(substance) {
+        filter_criteria = {$and: [{location: area_code}, {'emissionData.substance': substance}]};
+    }else{
+        filter_criteria = {location: area_code};
+    }
+    let queryPromise = mongoDb.getFilteredDocuments(dee_collection,filter_criteria);
+    let response = {};
+    queryPromise.toArray(function(err, docs){
+        if(docs) {
+            response['data'] = docs;
+            res.send(response);
+        }else{
+            let error = {message: "No documents found"};
+            res.send(error);
+        }
     });
 });
 

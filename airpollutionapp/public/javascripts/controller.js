@@ -1,122 +1,133 @@
-$(function() {
-    let that = this;
+$(function () {
 
     let appController = {
-        loadVisualization: function(visualizationOption){
+        loadVisualization: function (visualizationOption) {
             let that = this;
             this.map = this.getMap(undefined);
-            this.substanceList =[];
+            this.substanceList = [];
+            this.phiduReferenceMap = {
+                "respiratory": ["respiratory_admissions", "Number of Respiratory admissions"],
+                "copd": ["copd_admissions", "Number of COPD admissions"],
+                "asthma": ["asthma_admissions", "Number of asthma admissions"],
+                "isch_heart": ["ischaemic_heart_admissions", "Number of Ischaemic Heart admissions"],
+                "stroke": ["stroke_admissions", "Number of stroke admissions"]
+            };
             // if(visualizationOption === 'emission'){
-                $.ajax({
-                        type: "GET",
-                        url: '/visualization/getEmissionData',
-                        contentType: 'application/json',
-                        success: function (response, body) {
-                           response.forEach(function(substance){
-                               let substanceName = substance.Name;
-                               let substanceId = substance.SubstanceId;
-                               let substanceThreshold = substance.SubstanceThreshold;
-                               $("#substanceSelect").append("<option value='"+substanceName+"'>" + substanceName + "</option>");
-                               that.substanceList.push({
-                                   name: substanceName,
-                                   id: substanceId,
-                                   threshold: substanceThreshold
-                               });
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getEmissionData',
+                contentType: 'application/json',
+                success: function (response, body) {
+                    response.forEach(function (substance) {
+                        let substanceName = substance.Name;
+                        let substanceId = substance.SubstanceId;
+                        let substanceThreshold = substance.SubstanceThreshold;
+                        $("#substanceSelect").append("<option value='" + substanceName + "'>" + substanceName + "</option>");
+                        that.substanceList.push({
+                            name: substanceName,
+                            id: substanceId,
+                            threshold: substanceThreshold
+                        });
 
-                           })
-                        },
-                });
+                    })
+                },
+            });
 
-            $('#submitOptions').on('click',()=>{
+            $('#submitOptions').on('click', () => {
                 let substance = $("#substanceSelect")[0].value;
                 let region = $("#regionSelect")[0].value;
                 let year = $("#yearSelect")[0].value;
                 let choroplethParameter = $("#heatMapSelector")[0].value;
                 that.optionMap = new Map();
-                that.optionMap.set("year",year)
-                    .set("substance",substance)
-                    .set("region",region)
-                    .set("choroplethParameter",choroplethParameter);
+                that.optionMap.set("year", year)
+                    .set("substance", substance)
+                    .set("region", region)
+                    .set("choroplethParameter", choroplethParameter);
 
-                if(!this.raiseParameterError([substance,region,year,choroplethParameter])){
+                if (!this.raiseParameterError([substance, region, year, choroplethParameter])) {
                     $.ajax({
                         type: "GET",
-                        url: '/visualization/getFilteredEmissionData/?region='+region+'?year='+year+'?substance='+substance
-                        +'?selector='+ choroplethParameter,
+                        url: '/visualization/getFilteredEmissionData/?region=' + region + '?year=' + year + '?substance=' + substance
+                        + '?selector=' + choroplethParameter,
                         contentType: 'application/json',
                         success: function (response, body) {
-                            if(response){
+                            if (response) {
                                 that.removeAllMapLayers(that.map);
                                 that.getMap(response);
                             }
                         },
-                        error: function(){
-                            that.showModal("Request Error","Unable to retrieve data");
+                        error: function () {
+                            that.showModal("Request Error", "Unable to retrieve data");
                         }
                     });
                 }
             });
 
-            $('#yearSelect').on('change', (evt)=>{
+            $('#yearSelect').on('change', (evt) => {
                 let year = $('#yearSelect')[0].value;
-                switch(year){
-                    case '2015': appController.appendChoroplethParameter(['emission','respiratory']);
+                switch (year) {
+                    case '2015':
+                        appController.appendChoroplethParameter(['emission', 'respiratory']);
                         break;
-                    case '2016': that.appendChoroplethParameter(['emission']);
+                    case '2016':
+                        that.appendChoroplethParameter(['emission']);
                         break;
-                    case '2017': that.appendChoroplethParameter(
-                        ['emission','respiratory','stroke','asthma',
-                            'isch_heart','copd'
-                        ]
-                    );
+                    case '2017':
+                        that.appendChoroplethParameter(
+                            ['emission', 'respiratory', 'stroke', 'asthma',
+                                'isch_heart', 'copd'
+                            ]
+                        );
                         break;
-                    case '2018': that.appendChoroplethParameter(['emission']);
+                    case '2018':
+                        that.appendChoroplethParameter(['emission']);
                         break;
-                    default: that.appendChoroplethParameter([]);
+                    default:
+                        that.appendChoroplethParameter([]);
                 }
             });
         },
 
-        raiseParameterError: function(parameters){
+        raiseParameterError: function (parameters) {
             let errorMap = new Map();
             let errorExists = false;
-            parameters.forEach(parameter=>{
-                if(parameter.indexOf("select") !== -1 || parameter.trim() === ""){
+            parameters.forEach(parameter => {
+                if (parameter.indexOf("select") !== -1 || parameter.trim() === "") {
                     errorExists = true;
                 }
             });
-            if(errorExists){
-                this.showModal("Invalid Parameters","Please select all parameters before visualization");
+            if (errorExists) {
+                this.showModal("Invalid Parameters", "Please select all parameters before visualization");
                 return errorExists;
-            }else{
+            } else {
                 return errorExists;
             }
         },
 
-        showModal: function(title, body) {
-        // Display error message to the user in a modal
+        showModal: function (title, body) {
+            // Display error message to the user in a modal
             $('#alert-modal-title').html(title);
             $('#alert-modal-body').html(body);
             $('#alert-modal').modal('show');
         },
 
-        appendChoroplethParameter: function(parameters){
+        appendChoroplethParameter: function (parameters) {
             document.getElementById("heatMapSelector").innerHTML = "";
             let choroplethMap = new Map();
-            choroplethMap.set("emission","Emission quantity")
-                .set("respiratory","Respiratory admissions")
-                .set("asthma","Asthma admissions")
-                .set("isch_heart","Ischaemic heart admissions")
-                .set("stroke","Stroke admissions")
-                .set("copd","COPD admissions");
+            choroplethMap.set("emission", "Emission quantity")
+                .set("respiratory", "Respiratory admissions")
+                .set("asthma", "Asthma admissions")
+                .set("isch_heart", "Ischaemic heart admissions")
+                .set("stroke", "Stroke admissions")
+                .set("copd", "COPD admissions");
             $("#heatMapSelector").append("<option value='selectChoropleth'>Select Parameter</option>");
-            parameters.forEach(parameter =>{
-                $('#heatMapSelector').append("<option value='"+parameter+"'>" + choroplethMap.get(parameter) + "</option>")
+            parameters.forEach(parameter => {
+                $('#heatMapSelector').append("<option value='" + parameter + "'>" + choroplethMap.get(parameter) + "</option>")
             });
         },
 
         getMap: function (response) {
-            if(!this.map) {
+            if (!this.map) {
                 this.map = L.map('mapid').setView([-37.814, 144.96332], 9);
                 L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
                     attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -124,7 +135,7 @@ $(function() {
                     id: 'mapbox.streets',
                     accessToken: 'sk.eyJ1IjoibWFwYm94YW50OTIiLCJhIjoiY2p2dGZ6NTlnMGNseDQ1b2phdHJ3Z2NsMiJ9.Qh6bVOZQ1HyAPtYB05xaXA'
                 }).addTo(this.map);
-            }else{
+            } else {
                 L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
                     attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
                     maxZoom: 18,
@@ -132,7 +143,7 @@ $(function() {
                     accessToken: 'sk.eyJ1IjoibWFwYm94YW50OTIiLCJhIjoiY2p2dGZ6NTlnMGNseDQ1b2phdHJ3Z2NsMiJ9.Qh6bVOZQ1HyAPtYB05xaXA'
                 }).addTo(this.map);
             }
-            //this.shapeFile = this.getShapeFile(response);
+
             this.getShapeFile(response);
             //this.shapeFile.addTo(this.map);
             return this.map;
@@ -144,8 +155,8 @@ $(function() {
             }
         },
 
-        removeAllMapLayers: function(map){
-            map.eachLayer(layer=>{
+        removeAllMapLayers: function (map) {
+            map.eachLayer(layer => {
                 map.removeLayer(layer);
             });
         },
@@ -154,106 +165,277 @@ $(function() {
             layer.addTo(this.map);
         },
 
-        getShapeFile: function(response){
+        getShapeFile: function (response) {
             let that = this;
             this.regionList = [];
-            let displayData;
+            this.regionCodeList = [];
             let year = '2018';
-            let choroplethParameter ="emission";
-            if(response) {
+            let choroplethParameter;
+            let area_code, area_name;
+            let phidu_key, dee_key;
+            if (response) {
                 year = that.optionMap.get('year');
+                dee_key = "DEE" + year + "Collection";
+                if (year === '2015' || year === '2017') {
+                    phidu_key = "PHIDU" + year + "Collection";
+                }
                 choroplethParameter = that.optionMap.get('choroplethParameter');
-            }
-            let shapeFileMap = new Map();
-            document.getElementById('regionSelect').innerHTML ="";
-            shapeFileMap.set("2015","public/javascripts/lga2015.zip")
-                        .set("2016","public/javascripts/lga2015.zip")
-                        .set("2017","public/javascripts/lga2017.zip")
-                        .set("2018","public/javascripts/lga2017.zip");
-
-            this.shpFile = new L.Shapefile(shapeFileMap.get(year), {
-                onEachFeature: function (feature, layer) {
-                    if (feature.properties) {
-                        let area_code = parseInt(year) >= 2017 ? feature.properties.lga_code16: feature.properties.lga_code;
-                        let area_name = parseInt(year) >= 2017? feature.properties.lga_name16: feature.properties.lga_name;
-                        let phidu_key = "PHIDU"+year+"Collection";
-                        let dee_key = "DEE"+year+"Collection";
-
-                        that.regionList.push({"code": feature.properties.lga_code16,"name":feature.properties.lga_name16});
-                        $("#regionSelect").append("<option value='" + area_code + "'>" + area_name + "</option>");
-
-                        if(response) {
-                            if (choroplethParameter.indexOf("emission") !== -1) {
-                                displayData = getInfoFrom(Object, feature, response[dee_key]).join(" <br/>");
-                            } else {
-                                response[dee_key].sort((a,b) => (a[area_name] > b[area_name]) ? 1 :
-                                    ((b[area_name] > a[area_name]) ? -1 : 0));
-                                displayData = getInfoFrom(Object, feature, response[phidu_key],year).join(" <br/>");
-                            }
-                            layer.bindPopup(displayData);
-                        }
-                    }
-                    // layer.on({
-                    //     //mouseover: highlightFeature,
-                    //     //mouseout: resetHighlight
-                    // });
-                },
-                // style: function (feature) {
-                //     if (feature.properties.sentimentDensity === undefined) {
-                //         feature.properties.sentimentDensity = that.getSentimentDensity(feature.properties.sa2_main16);
-                //     }
-                //
-                //     return {
-                //         fillColor: that.getColor(feature.properties.sentimentDensity),
-                //         weight: 1,
-                //         opacity: 1,
-                //         color: 'black',
-                //         dashArray: '3',
-                //         fillOpacity: 0.7
-                //     };
-                // }
-
-
-            }).addTo(this.map);
-
-            function getInfoFrom(object, feature, data,year) {
-                let displayRequiredData = [];
-                let viz_data = data;
-                object.keys(feature.properties).map(function (k) {
-                    if (isNaN(parseInt(k))) {
-                        key = k;
-                    } else {
-                        key = k.substring(parseInt(k).toString().length);
-                        feature.properties[key] = feature.properties[k];
-                        delete k;
-                    }
-                    if ((!isNaN(feature.properties[key]) || key === "sa2_name16")) {
-                        displayRequiredData.push(that.keymap[key] + ": " + feature.properties[key]);
+                that.sortedBusinessList = response[dee_key];
+                that.sortedBusinessList.forEach(business => {
+                    if (!that.regionCodeList.includes(business["location"])) {
+                        that.regionCodeList.push(business["location"]);
                     }
                 });
-                return displayRequiredData;
+
+                phidu_key === undefined ? that.phidu_data = undefined : that.phidu_data = response[phidu_key];
+                if (that.phidu_data !== undefined) {
+                    that.phidu_sorted_data = response[phidu_key].sort((a, b) => (a[area_name] > b[area_name]) ? 1 :
+                        ((b[area_name] > a[area_name]) ? -1 : 0));
+                }
             }
 
-            // return this.shpFile;
+            document.getElementById('regionSelect').innerHTML = "";
+            $("#regionSelect").append("<option value='selectRegion'>Select Region</option>");
+
+            let shapeFileMap = new Map();
+            shapeFileMap.set("2015", "public/javascripts/lga2015.zip")
+                .set("2016", "public/javascripts/lga2015.zip")
+                .set("2017", "public/javascripts/lga2017.zip")
+                .set("2018", "public/javascripts/lga2017.zip");
+
+            let code_key = parseInt(year) >= 2017 ? "lga_code16" : "lga_code";
+            let name_key = parseInt(year) >= 2017 ? "lga_name16" : "lga_name";
+
+            that.shpFile = new L.Shapefile(shapeFileMap.get(year), {
+                onEachFeature: function (feature, layer) {
+                    if (feature.properties) {
+                        area_code = feature.properties[code_key];
+                        area_name = feature.properties[name_key];
+                        console.log("called on each feature");
+                        that.regionList.push({"code": area_code, "name": area_name});
+                        $("#regionSelect").append("<option value='" + area_code + "'>" + area_name + "</option>");
+                    }
+                    layer.on({
+                        //mouseover: highlightFeature,
+                        //mouseout: resetHighlight
+                    });
+                },
+                style: function (feature) {
+                    let max_value, min_value, currentEmission, currentAdmissionValue, styleValue;
+                    // console.log('called style');
+                    if (choroplethParameter) {
+                        if (choroplethParameter !== 'emission') {
+                            let year = that.optionMap.get("year");
+                            let code = parseInt(year) >= 2017 ? "lga_code16" : "lga_code";
+                            let key = that.phiduReferenceMap[choroplethParameter][0];
+                            if (that.phidu_data.length > 0) {
+                                max_value = that.phidu_data[0][key];
+                                min_value = that.phidu_data[that.phidu_data.length - 1][key];
+                                let currentRegion = that.phidu_data.filter(region => {
+                                    return region["lga_code"] === feature.properties[code];
+                                });
+                                currentAdmissionValue = currentRegion[0][key];
+                            }
+
+                        } else {
+                            let year = that.optionMap.get("year");
+                            let no_business = that.sortedBusinessList.length;
+                            let code = parseInt(year) >= 2017 ? "lga_code16" : "lga_code";
+                            if (no_business > 0) {
+                                max_value = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
+                                min_value = that.sortedBusinessList[no_business - 1].emissionData['quantity_in_kg'];
+                                let currentBusiness = that.sortedBusinessList.filter(business => {
+                                    return business["location"] === feature.properties[code]
+                                });
+                                if (currentBusiness && currentBusiness.length > 0) {
+                                    let totalQuantity = 0;
+                                    currentBusiness.forEach(business =>{
+                                        totalQuantity += business.emissionData['quantity_in_kg']
+                                    });
+                                    currentEmission = totalQuantity;
+                                } else {
+                                    if(that.regionCodeList.includes(feature.properties[code])){
+                                        currentEmission= 0;
+                                    }else{
+                                        currentEmission = null;
+                                    }
+                                }
+                            }else{
+                                if(that.regionCodeList.includes(features.properties[code])){
+                                    currentEmission = 0;
+                                }else{
+                                    currentEmission = null;
+                                }
+                            }
+                        }
+                        styleValue =choroplethParameter === "emission"? currentEmission: currentAdmissionValue;
+                        return {
+                            fillColor: that.getColor(styleValue, min_value, max_value),
+                            weight: 1,
+                            opacity: 1,
+                            color: 'black',
+                            dashArray: '3',
+                            fillOpacity: 0.75
+                        };
+                    }
+                }
+            });
+
+            that.shpFile.addTo(that.map);
+            this.shpFile.on('click', function (layer) {
+                let feature = layer.layer.feature;
+                let code = parseInt(year) >= 2017 ? feature.properties.lga_code16 : feature.properties.lga_code;
+                let name = parseInt(year) >= 2017 ? feature.properties.lga_name16 : feature.properties.lga_name;
+                getLayerInfo(code, name, that, year, layer.layer);
+            });
+
+            function getLayerInfo(code, name, appObject, year, layer) {
+                let info = [];
+                let viz_layer = layer;
+                let total_Quantity = 0, items = 0;
+                let substance = appObject.optionMap.get("substance");
+                info.push("Area Name:" + name);
+                let choroplethParameter = appObject.optionMap.get("choroplethParameter");
+                if (choroplethParameter !== 'emission') {
+                    if (year === '2015' || year === '2017') {
+                        let admissionValueList = appObject.getAdmissionValues(code, year);
+                        admissionValueList.forEach((value, key) => {
+                            info.push(key + ':' + value);
+                        })
+                    }
+                } else {
+                    let admissionValueList = appObject.getAdmissionValues(code, year);
+                    if (admissionValueList) {
+                        admissionValueList.forEach((value, key) => {
+                            info.push(key + ':' + value);
+                        });
+                    }
+                }
+                $.ajax({
+                    type: "GET",
+                    url: '/visualization/getRegionEmissionData/?region=' + code + '?year=' + year + '?substance=' + substance,
+                    contentType: 'application/json',
+                    success: function (substanceResponse) {
+                        if (substanceResponse && substanceResponse['data'].length > 0) {
+                            //get Business List and return sum of air quantity of businesses
+                            substanceResponse['data'].forEach(substanceNode => {
+                                let emissionNode = substanceNode.emissionData.filter(function (node) {
+                                    return node['substance'] === substance;
+                                });
+                                total_Quantity += emissionNode[0]['quantity_in_kg'];
+                                items++;
+                            });
+                            if (items === substanceResponse['data'].length) {
+                                info.push("Total Emission (in Kg):" + total_Quantity);
+                                viz_layer.bindPopup(info.join(" <br/>"));
+                            }
+                        } else {
+                            //no data found which means region doesn't have any emission of that substance
+                            info.push("Total Emission (in Kg):" + total_Quantity);
+                            viz_layer.bindPopup(info.join(" <br/>"));
+                        }
+                    },
+                    error: function () {
+                        that.showModal("Request Error", "Unable to retrieve data");
+                    }
+                });
+            }
+
+            // function highlightFeature(e) {
+            //     var layer = e.target;
+            //     layer.setStyle({
+            //         weight: 3,
+            //         color: 'black',
+            //         dashArray: '',
+            //         fillOpacity: 0.7
+            //     });
+            //
+            //     if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            //         layer.bringToFront();
+            //     }
+            //     that.info.update(layer.feature.properties);
+            //     var popup = L.popup()
+            //         .setLatLng(e.latlng)
+            //         .setContent(that.getSentimentText(e.target.feature.properties.sentimentDensity))
+            //         .openOn(that.map);
+            // }
         },
 
-        getColor: function (d) {
-            var range = (this.max - this.min)/5;
-            return d > this.max-range ? '#05C804' :
-                d > this.max-(2*range) ? '#71D503' :
-                    d > this.max-(3*range) ? '#E3DB02' :
-                        d > this.max-(4*range) ? '#F06D01' :
-                            d > this.max-(5*range) ? '#FE0010' :
+        getAdmissionValues: function (code, year) {
+            let that = this;
+            let code_region = code;
+            if (year === '2015' || year === '2017') {
+                let reference2015Map = {
+                    "respiratory": ["respiratory_admissions", "Number of Respiratory admissions"]
+                };
+                let referenceMap;
+                let choroplethParameter = this.optionMap.get("choroplethParameter");
+                referenceMap = parseInt(year) >= 2017 ? that.phiduReferenceMap : reference2015Map;
+                let area_selected = this.phidu_data.filter((region) => {
+                    return region.lga_code === code;
+                });
+                let admissionValueMap = new Map();
+
+                //if choropleth parameter is related to PHIDU data return that parameter only else return list of parameters
+                if (choroplethParameter !== 'emission') {
+                    admissionValueMap = this.createAndReturnMap(referenceMap, area_selected, choroplethParameter);
+                    return admissionValueMap;
+                } else {
+
+                    Object.keys(referenceMap).map(referenceKey => {
+                        let key = referenceMap[referenceKey][1];
+                        let selected_region = that.phidu_data[0][referenceKey].filter(region => {
+                            return region.lga_code === code_region;
+                        });
+                        admissionValueMap.set(key, selected_region[0][referenceMap[referenceKey][0]]);
+                    });
+                    return admissionValueMap;
+                }
+            }
+        },
+
+        getEmissionData: function (emissionData, code, year, substance) {
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getRegionEmissionData/?region=' + code + '?year=' + year,
+                contentType: 'application/json',
+                success: function (clusterResponse) {
+                    if (clusterResponse && clusterResponse['data'].length > 0) {
+                        that.regionEmissionBusinessList = clusterResponse['data'];
+                    }
+                },
+                error: function () {
+                    that.showModal("Request Error", "Unable to retrieve data");
+                }
+            });
+        },
+
+        createAndReturnMap: function (referenceMap, area_selected, choroplethParameter) {
+            let admissionMap = new Map();
+            let admission_key = referenceMap[choroplethParameter][1];
+            let admission_value = area_selected[0][referenceMap[choroplethParameter][0]];
+            admissionMap.set(admission_key, admission_value);
+            return admissionMap;
+        },
+
+        getColor: function (data, min, max) {
+            let range = (max - min) / 5;
+            return data > max - range ? '#FE0010' :
+                data > max - (2 * range) ? '#F06D01' :
+                    data > max - (3 * range) ? '#E3DB02' :
+                        data > max - (4 * range) ? '#71D503' :
+                            data > max - (5 * range) ? '#05C804' :
                                 '#A9A9A9';
         },
+
         addLegend: function () {
             var that = this;
             this.legend = L.control({position: 'bottomright'});
             this.legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend'),
-                    range = (that.max - that.min)/5;
-                grades = [that.min, that.max-(4*range), that.max-(3*range),
-                    that.max-(2*range), that.max-range, that.max],
+                    range = (that.max - that.min) / 5;
+                grades = [that.min, that.max - (4 * range), that.max - (3 * range),
+                    that.max - (2 * range), that.max - range, that.max],
                     labels = [];
                 // loop through our density intervals and generate a label with a colored square for each interval
                 for (var i = 0; i < grades.length - 1; i++) {
@@ -266,20 +448,21 @@ $(function() {
             this.legend.addTo(this.map);
         },
     };
-    $('#visualizationType').on('change',function (evt) {
+    let that = this;
+
+    $('#visualizationType').on('change', function (evt) {
         that.visualizationOption = this.value;
     });
 
-    $('#visualize-button').on('click',()=>{
-        if(that.visualizationOption === undefined){
-            // alert("Please select a visualization option");
-            appController.showModal("Invalid Visualization option"," Please select a valid option");
-        } else{
+    $('#visualize-button').on('click', () => {
+        if (that.visualizationOption === undefined) {
+            appController.showModal("Invalid Visualization option", " Please select a valid option");
+        } else {
             window.location.href = '/visualization?type=' + that.visualizationOption;
         }
     });
 
-    if(window.location.pathname === '/visualization') {
+    if (window.location.pathname === '/visualization') {
         console.log('ax');
         appController.loadVisualization(that.visualizationOption);
     }

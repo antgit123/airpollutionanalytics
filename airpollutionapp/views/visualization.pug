@@ -2,17 +2,17 @@ extends layout
 
 block content
     div#parent-visualization-container.container.bg-white
-        //row for the separation of the
+        //row for the separation of the charts and map container
         div.row
             //for navigation menu
             div.col-3
-                    h3 Select Map Parameters
+                    h3 Select Parameters
                     div.form-group
                         label(for="substanceSelect") Select Substance:
                         select#substanceSelect.form-control
                             option(value="selectSubstance") Select Substance
                     div.form-group
-                        label(for="regionSelect") Select Region:
+                        label(for="regionSelect") Select Chart Region:
                         select#regionSelect.form-control
                             option(value="selectRegion")
                     div.form-group
@@ -24,7 +24,7 @@ block content
                             option(value="2017") 2017
                             option(value="2018") 2018
                     div.form-group
-                        label(for="heatMapSelector") Select choropleth parameter:
+                        label(for="heatMapSelector") Select map choropleth parameter:
                         select#heatMapSelector.form-control
                             //option(value="selectChoropleth") Select parameter
                     div.form-group
