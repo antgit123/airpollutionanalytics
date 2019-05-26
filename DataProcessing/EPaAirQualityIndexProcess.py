@@ -11,13 +11,17 @@ air_quality_monitors_site_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitor
 air_quality_measurements_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Measurements?"
 air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
 epa_ubuntu_output_path = "/mnt/epa_geomesa/"
-epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA"
+
 
 conf = SparkConf().setAppName("EpaProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 sc = SparkContext(conf = conf)
 sc.setCheckpointDir("hdfs://45.113.232.133:9000/Checkpoint")
 sqlContext = SQLContext(sc)
 sqlContext.setConf('spark.sql.shuffle.partitions', '10')
+startdate = sys.argv[1]
+enddate = sys.argv[2]
+year = sys.argv[3]
+epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA"+year
 
 #function to get air quality monitors for yearly time period
 def getAirQualityMonitors(fromDate,toDate):
@@ -74,9 +78,7 @@ final_Measurement_Result = {}
 final_Wind_Result={}
 final_Measurement_Result['Features']= []
 final_Wind_Result['Features'] = []
-startdate = sys.argv[1]
-enddate = sys.argv[2]
-year = sys.argv[3]
+
 stationName = ""
 stationData = ""
 aggregatedDataframe = 0
@@ -98,5 +100,5 @@ aggMaxDf = aggMaxDf.checkpoint(eager=True)
 finalDf = aggMaxDf.groupBy('time', 'latitude', 'longitude', 'siteId', 'stationName').avg('max(aqiIndex)')
 finalDf = finalDf.checkpoint(eager=True)
 airQualityDF = finalDf.toDF('dtg', 'latitude', 'longitude', 'siteId', 'siteName', 'agiIndex')
-finalDf.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save(epa_output_hdfs_path+year)
+finalDf.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save(epa_output_hdfs_path)
 
