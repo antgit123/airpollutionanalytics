@@ -2,7 +2,6 @@ import requests
 from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark import SparkConf
-import json
 import sys
 
 get_sites_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/sites"
@@ -12,53 +11,13 @@ air_quality_monitors_site_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Monitor
 air_quality_measurements_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/Measurements?"
 air_quality_station_query = "http://sciwebsvc.epa.vic.gov.au/aqapi/StationData?"
 epa_ubuntu_output_path = "/mnt/epa_geomesa/"
-epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA2018"
+epa_output_hdfs_path = "hdfs://45.113.232.133:9000/EPA"
 
 conf = SparkConf().setAppName("EpaProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
-sc = SparkContext()
-# sc.setCheckpointDir("hdfs://45.113.232.133:9000/Checkpoint")
+sc = SparkContext(conf = conf)
+sc.setCheckpointDir("hdfs://45.113.232.133:9000/Checkpoint")
 sqlContext = SQLContext(sc)
 sqlContext.setConf('spark.sql.shuffle.partitions', '10')
-
-#function to get sites data default time period
-def obtainSitesData(query):
-    sites_requestData = requests.get(query).json()
-    return sites_requestData['Sites']
-
-#function to get sites data for specified time period
-def obtainSitesDataPeriod(fromDate,toDate):
-    query = get_sites_monitor_query+'&fromDate='+fromDate+'&toDate='+toDate
-    sites_period_data = requests.get(query).json()
-    sites_period_list = sites_period_data['Sites']
-    # for site in sites_period_list:
-    #     site['Wkt_point'] = str(geometry.Point(site['Latitude'], site['Longitude']))
-    return sites_period_list
-
-#function to get air quality measurements for all sites, indicators categorized by time
-def getAirQualityMeasurements(fromDate,toDate,typeOfMeasurement,monitorId,siteId):
-    query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
-    airMeasurementData= requests.get(query).json()
-    airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
-
-    # airMeasurementsByTime = airMeasurementData_rdd.map(lambda x: [x['DateTimeStart'],{'AQI':x['AQIIndex'],'Description':x['AQICategoryDescription'],'Location':(x['Latitude'],x['Longitude'])}])
-    if monitorId == 'BPM2.5' and typeOfMeasurement == '24HR_AV':
-        airMeasurementsByTime = airMeasurementData_rdd.map(
-            lambda x: [x['DateTimeStart'], {'AQI': x['AQIIndex'], 'Description': x['AQICategoryDescription'],
-                                            'Category': x['AQICategoryAbbreviation'],
-                                            'BackgroundColor': x['AQIBackgroundColour'],
-                                            'HealthLevel': x['HealthCategoryLevel'],
-                                            'HealthDescription': x['HealthCategoryDescription'],
-                                            'HealthMessage':x['HealthCategoryMessage'],
-                                            'ForegroundColor': x['AQIForegroundColour'],
-                                            'Location_Lat': x['Latitude'], 'Location_Long': x['Longitude']}])
-    else:
-        airMeasurementsByTime = airMeasurementData_rdd.map(
-            lambda x: [x['DateTimeStart'], {'AQI': x['AQIIndex'], 'Description': x['AQICategoryDescription'],
-                                            'Category': x['AQICategoryAbbreviation'],
-                                            'BackgroundColor': x['AQIBackgroundColour'],
-                                            'ForegroundColor': x['AQIForegroundColour'],
-                                            'Location_Lat': x['Latitude'], 'Location_Long': x['Longitude']}])
-    return {(str(siteId)):airMeasurementsByTime.collect(), 'monitorId':monitorId}
 
 #function to get air quality monitors for yearly time period
 def getAirQualityMonitors(fromDate,toDate):
@@ -94,11 +53,12 @@ wind_indicators = ['SWS','VWD','VWS']
 other_indicators = ['DBT']
 
 def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,monitorId,siteId,stationName, result):
+    today = year+'-01-01T'
     airMeasurementDf = 0
     query= air_quality_measurements_query+'siteId='+str(siteId)+'&monitorId='+monitorId+'&timebasisid='+typeOfMeasurement+'&fromDate='+fromDate+'&toDate='+toDate
     airMeasurementData= requests.get(query).json()
     airMeasurementData_rdd = sc.parallelize(airMeasurementData['Measurements'])
-    airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: ('2018-01-01T'+ x['DateTimeStart'][-8:],
+    airMeasurementBySiteTime = airMeasurementData_rdd.map(lambda x: (today+ x['DateTimeStart'][-8:],
                                 float(x['AQIIndex']),x['DateTimeStart'], x['Latitude'], x['Longitude'], siteId, stationName))
     airMeasurementList = airMeasurementBySiteTime.collect()
     if len(airMeasurementList) > 0:
@@ -107,7 +67,7 @@ def getAirQualityAggregateMeasurements(fromDate,toDate,year,typeOfMeasurement,mo
             result = airMeasurementDf
         else:
             result = result.union(airMeasurementDf)
-        #add checkpoint
+    result = result.checkpoint(eager=True)
     return result
 
 final_Measurement_Result = {}
@@ -134,11 +94,9 @@ for airIndicatorRecord in airQualityMonitorDictionary['airQualitySites'].collect
 
 
 aggMaxDf = aggregatedDataframe.groupBy('date', 'latitude', 'longitude', 'siteId', 'stationName', 'time').max('aqiIndex')
-#Add checkpoint
+aggMaxDf = aggMaxDf.checkpoint(eager=True)
 finalDf = aggMaxDf.groupBy('time', 'latitude', 'longitude', 'siteId', 'stationName').avg('max(aqiIndex)')
-finalDf.show()
-#add checkpoint
-finalDf.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save("E:\StudyNotes\Semester4\Project\EpaAQIIndex")
-
-
+finalDf = finalDf.checkpoint(eager=True)
+airQualityDF = finalDf.toDF('dtg', 'latitude', 'longitude', 'siteId', 'siteName', 'agiIndex')
+finalDf.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save(epa_output_hdfs_path+year)
 
