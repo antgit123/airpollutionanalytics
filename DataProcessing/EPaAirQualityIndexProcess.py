@@ -100,5 +100,4 @@ aggMaxDf = aggMaxDf.checkpoint(eager=True)
 finalDf = aggMaxDf.groupBy('time', 'latitude', 'longitude', 'siteId', 'stationName').avg('max(aqiIndex)')
 finalDf = finalDf.checkpoint(eager=True)
 airQualityDF = finalDf.toDF('dtg', 'latitude', 'longitude', 'siteId', 'siteName', 'agiIndex')
-finalDf.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save(epa_output_hdfs_path)
-
+airQualityDF.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite").option("header", "true").save(epa_output_hdfs_path)
