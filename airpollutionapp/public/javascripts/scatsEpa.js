@@ -86,8 +86,8 @@ $(function(){
             let proxy = 'server/proxy.php';
             let WMSUrl = "http://45.113.234.120:8080/geoserver/airpollution/wms/";
             let wmsEPALayer  = L.tileLayer.wms(WMSUrl, {
-                cql_filter: "monitorId='" + monitorId +"'",
-                layers: 'airpollution:epa_' + year,
+                //cql_filter: "monitorId='" + monitorId +"'",
+                layers: 'airpollution:epa_agi_' + year,
                 // styles: 'EPAStyleCircle'+monitorId,
                 format: 'image/png',
                 styles: 'EPAStyleCircleBPM2.5',
