@@ -246,4 +246,44 @@ router.get('/getEPAAirIndexData', (req, res, next) => {
     });
 });
 
+router.get('/getChartData', (req, res, next) => {
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let currentYr = queryMap.get("year");
+    let siteId = queryMap.get("siteId");
+    let queryPromise = [];
+
+    //Getting scats data
+    let collectionName = "ScatsEPA" + currentYr + "Collection";
+    let filter_criteria = {SiteId: siteId};//Picking only 1 time to just have the emission data
+    queryPromise.push(mongoDb.getFilteredDocuments(collectionName, filter_criteria));
+
+    //Getting EPA particle concentration data
+    let epaCollectionName = "EPA" + currentYr + "MeasurementsCollection";
+    let epa_filter_criteria = {SiteId: siteId};//Picking only 1 time to just have the emission data
+    queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
+
+
+    let response = {};
+    let items = 0;
+    Promise.all(queryPromise).then(collectionValues => {
+        collectionValues.forEach(collectionValue => {
+            let namespace = collectionValue.ns.split(".")[1];
+            collectionValue.toArray((error, docs) => {
+                if (docs) {
+                    response[namespace] = docs;
+                } else {
+                    let error = {message: "No documents found"};
+                    res.send(error);
+                }
+                items++;
+                if (items === queryPromise.length) {
+                    mongoDb.resolveAndReturnResponse(response, res);
+                }
+            })
+        })
+    });
+});
+
 module.exports = router;

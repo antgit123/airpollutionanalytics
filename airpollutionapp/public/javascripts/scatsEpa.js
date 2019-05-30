@@ -5,14 +5,14 @@ $(function(){
             this.map = this.getMap();
 
             $('#submitOptionsForScatsEpa').on('click',()=>{
-                let year = $("#yearSelectForScatsEpa")[0].value;
+                that.year = $("#yearSelectForScatsEpa")[0].value;
                 that.removeAllMapLayers(that.map);
-                that.updateTimeOptions(that.map, year);
-                that.addEpaLayer(year);
-                that.addScatsLayer(year);
+                that.updateTimeOptions(that.map, that.year);
+                that.addEpaLayer(that.year);
+                that.addScatsLayer(that.year);
                 $.ajax({
                     type: "GET",
-                    url: '/visualization/getEPAAirIndexData/?year=' + year,
+                    url: '/visualization/getEPAAirIndexData?year=' + that.year,
                     contentType: 'application/json',
                     success: function (response, body) {
                         if (response) {
@@ -112,6 +112,7 @@ $(function(){
         },
 
         createStationLayerGroup: function (stations) {
+            let that = this;
             stations.forEach(station =>{
                 let latitude = station['latitude'];
                 let longitude = station['longitude'];
@@ -129,11 +130,68 @@ $(function(){
                 circlemarker.featureInfo = station;
                 circlemarker.on('click', function(e) {
                     alert(e.target.featureInfo);
+                    that.showChartView(e.target.featureInfo);
                 });
                 circlemarker.on('mouseover',function(ev) {
                     circlemarker.openPopup();
                 });
             });
+        },
+        showChartView: function(featureInfo) {
+            let that = this;
+            let siteId = featureInfo.siteId;
+            that.chartData = {};
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getChartData?year=' + that.year + '?siteId=' + siteId,
+                contentType: 'application/json',
+                success: function (response, body) {
+                    if (response) {
+                        that.chartData = response.data;
+                        console.log(that.chartData);
+                        //that.showCOChart();
+                    }
+                },
+                error: function () {
+                    that.showModal("Request Error", "Unable to retrieve data");
+                }
+            });
+        },
+        showCOChart: function(){
+            let that = this;
+            let emissionYearKeys = Array.from(that.emissionTrendMap.keys());
+            let phiduYearKeys = Array.from(that.phiduTrendMap.keys());
+            let emissionYearValues = Array.from(that.emissionTrendMap.values());
+            let phiduYearValues = Array.from(that.phiduTrendMap.values());
+            let emissionTrace = {
+                x: emissionYearKeys,
+                y: emissionYearValues,
+                name: 'Emission data',
+                type: 'scatter'
+            };
+
+            let phiduTrace = {
+                x: phiduYearKeys,
+                y: phiduYearValues,
+                name: 'Respiratory admissions',
+                yaxis: 'y2',
+                type: 'scatter'
+            };
+
+            let trendData = [emissionTrace, phiduTrace];
+            let layout = {
+                title: "Region Trends Chart",
+                yaxis: {title: 'Total emission quantity'},
+                yaxis2: {
+                    title: 'Respiratory Admissions',
+                    titlefont: {color: 'rgb(148, 103, 189)'},
+                    tickfont: {color: 'rgb(148, 103, 189)'},
+                    overlaying: 'y',
+                    side: 'right'
+                }
+            };
+            Plotly.newPlot('trendsChart', trendData,layout);
+            $('#charts-container').show();
         }
     };
 
