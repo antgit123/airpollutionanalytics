@@ -80,6 +80,17 @@ a {
   width: 20px;
 }
 
-.chart-visualization-container{
+
+#charts-container{
   border: 2px solid lightgray;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#statsSection{
+  margin-top: 15px;
+}
+
+#statsSection .statsText{
+  margin-left: 5px;
 }

@@ -12,7 +12,7 @@ block content
                         select#substanceSelect.form-control
                             option(value="selectSubstance") Select Substance
                             //option(value="selectSubstance")
-                    div.form-group
+                    div#regionContainer.form-group
                         label(for="regionSelect") Select Chart Region:
                         select#regionSelect.form-control
                             option(value="selectRegion")
@@ -39,17 +39,42 @@ block content
             //for visualization area
             div.col-9
                 div#mapid
-        div.container
+        div#charts-container.container
+            div.row.d-flex.justify-content-center
+                h4 Visualization Charts
             div.row
-                div.col-3
-                div.col-9
-                    div.d-inline
-                        h6 Selected Region:
-                        span#selectedRegionText
-                    div.d-inline
-                        h6 Selected Substance:
-                        span#selectedSubstanceText
-            div.row
+                div.col-4
+                    div#regionStatsContainer.container
+                        div.d-flex.justify-content-center
+                            h5 Region Statistics
+                        div#statsSection
+                            div.row
+                                div.d-inline
+                                    h6 Region Name:
+                                div.d-inline.statsText
+                                    span#selectedRegionText
+                            div.row
+                                div.d-inline
+                                    h6 Selected Substance:
+                                div.d-inline.statsText
+                                    span#selectedSubstanceText
+                                div.d-inline
+                                    h6 Total Emission (in Kg):
+                                div.d-inline.statsText
+                                    span#totalEmissionText
+                                div.d-inline
+                                    h6 Number of businesses in region:
+                                div.d-inline.statsText
+                                    span#totalBusinessText
+                                div.d-inline
+                                    h6 Highest business emission quantity:
+                                div.d-inline.statsText
+                                    span#highestEmissionText
+                                div.d-inline
+                                    h6 Lowest business emission quantity:
+                                div.d-inline.statsText
+                                    span#lowestEmissionText
+
                 div.col-6
                     div#trendsChart
     //for error and validation
