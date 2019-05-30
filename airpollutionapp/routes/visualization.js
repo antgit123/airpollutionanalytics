@@ -226,4 +226,24 @@ router.get('/getRegionEmissionData', (req, res, next) => {
     });
 });
 
+router.get('/getEPAAirIndexData', (req, res, next) => {
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let year = queryMap.get("year");
+    let collectionName = "EPAAirIndex" + year + "Collection";
+    let filter_criteria = {dtg:"2018-01-01T11:00:00"};//Picking only 1 time to just have the emission data
+    let queryPromise = mongoDb.getFilteredDocuments(collectionName, filter_criteria);
+    let response = {};
+    queryPromise.toArray(function (err, docs) {
+        if (docs) {
+            response['data'] = docs;
+            res.send(response);
+        } else {
+            let error = {message: "No documents found"};
+            res.send(error);
+        }
+    });
+});
+
 module.exports = router;

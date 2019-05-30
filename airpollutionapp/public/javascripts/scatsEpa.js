@@ -4,32 +4,25 @@ $(function(){
             let that = this;
             this.map = this.getMap();
 
-            var monitorList = scatsEpaConstants.getMonitorList();
-            Object.keys(monitorList).map(function(key) {
-                $("#monitorSelect").append("<option value='"+key+"'>" + monitorList[key] + "</option>");
-            });
-
-            // let featureInfoUrl = 'http://45.113.234.120:8080/geoserver/airpollution/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&FORMAT=image%2Fpng&TRANSPARENT=true&QUERY_LAYERS=airpollution%3Aepa_2018&STYLES&LAYERS=airpollution%3Aepa_2018&INFO_FORMAT=application%2Fjson&FEATURE_COUNT=50&X=50&Y=50&SRS=EPSG%3A4326&WIDTH=101&HEIGHT=101&BBOX=145.04974365234375%2C-38.054809682071216%2C145.60455322265625%2C-37.500000111758716';
-            // $.ajax({
-            //     type: "GET",
-            //     url: featureInfoUrl,
-            //     contentType: 'application/json',
-            //     success: function (response) {
-            //         alert(response);
-            //     },
-            //     error: function () {
-            //         alert("response fail");
-            //     }
-            // });
-
             $('#submitOptionsForScatsEpa').on('click',()=>{
-                let monitorId = $("#monitorSelect")[0].value;
                 let year = $("#yearSelectForScatsEpa")[0].value;
-                let epaStyleForMonitorId = scatsEpaConstants.getstyleForMonitorId(monitorId);
                 that.removeAllMapLayers(that.map);
                 that.updateTimeOptions(that.map, year);
-                that.addEpaLayer(year, monitorId);
+                that.addEpaLayer(year);
                 that.addScatsLayer(year);
+                $.ajax({
+                    type: "GET",
+                    url: '/visualization/getEPAAirIndexData/?year=' + year,
+                    contentType: 'application/json',
+                    success: function (response, body) {
+                        if (response) {
+                            that.createStationLayerGroup(response.data);
+                        }
+                    },
+                    error: function () {
+                        that.showModal("Request Error", "Unable to retrieve data");
+                    }
+                });
             });
         },
 
@@ -81,14 +74,12 @@ $(function(){
             layer.addTo(this.map);
         },
 
-        addEpaLayer: function(year, monitorId) {
+        addEpaLayer: function(year) {
 
             let proxy = 'server/proxy.php';
             let WMSUrl = "http://45.113.234.120:8080/geoserver/airpollution/wms/";
             let wmsEPALayer  = L.tileLayer.wms(WMSUrl, {
-                //cql_filter: "monitorId='" + monitorId +"'",
                 layers: 'airpollution:epa_agi_' + year,
-                // styles: 'EPAStyleCircle'+monitorId,
                 format: 'image/png',
                 styles: 'EPAStyleCircleBPM2.5',
                 transparent: true
@@ -118,42 +109,37 @@ $(function(){
             });
 
             this.addLayerToMap(wmsScatsTimeLayer);
-        }
-
-    };
-
-    let scatsEpaConstants = {
-        getMonitorList: function() {
-            var monitorList = {
-                'BPM2.5': 'Particles as PM2.5',
-                'CO': 'Carbon Monoxide',
-                'NO2': 'Nitrogen Dioxide',
-                'O3': 'Ozone',
-                'PM10': 'Particles as PM10',
-                'SO2': 'Sulfur Dioxide',
-                'API': 'Visibility Reduction',
-                'sp_AQI': 'Air Quality Index Summary'
-            };
-            return monitorList;
         },
 
-        getstyleForMonitorId: function(monitorId) {
-            var epaStyles = {
-                'BPM2.5': 'epaStyle_BPM2.5',
-                'CO': 'epaStyle_CO',
-                'NO2': 'Nitrogen Dioxide',
-                'O3': 'Ozone',
-                'PM10': 'Particles as PM10',
-                'SO2': 'Sulfur Dioxide',
-                'API': 'Visibility Reduction',
-                'sp_AQI': 'Air Quality Index Summary'
-            }
+        createStationLayerGroup: function (stations) {
+            stations.forEach(station =>{
+                let latitude = station['latitude'];
+                let longitude = station['longitude'];
+
+                let info = "<b>Station Name" + ":</b>" + station["siteName"] + "</br>" +
+                    "<b>Air Quality Index</b> "+ station["agiIndex"].toFixed(2);
+                let circlemarker = L.circle([latitude,longitude],{
+                    radius: 2000,
+                    stroke: true,
+                    color: '#ffffff00',
+                    fill: true
+                    }
+                ).addTo(this.map).bindPopup(info);
+
+                circlemarker.featureInfo = station;
+                circlemarker.on('click', function(e) {
+                    alert(e.target.featureInfo);
+                });
+                circlemarker.on('mouseover',function(ev) {
+                    circlemarker.openPopup();
+                });
+            });
         }
     };
+
     if(window.location.pathname === '/visualization' && window.location.search === '?type=scats') {
         console.log('scats');
         scatsEpaController.loadVisualization();
     }
-
 });
 
