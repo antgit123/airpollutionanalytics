@@ -10,6 +10,14 @@ $(function(){
                 that.updateTimeOptions(that.map, that.year);
                 that.addEpaLayer(that.year);
                 that.addScatsLayer(that.year);
+                if(!that.legendEpaAdded){
+                    that.addLegendEpa();
+                }
+                that.legendEpaAdded = true;
+                if(!that.legendScatsAdded){
+                    that.addLegendScats();
+                }
+                that.legendScatsAdded = true;
                 $.ajax({
                     type: "GET",
                     url: '/visualization/getEPAAirIndexData?year=' + that.year,
@@ -53,6 +61,8 @@ $(function(){
                 accessToken: 'sk.eyJ1IjoibWFwYm94YW50OTIiLCJhIjoiY2p2dGZ6NTlnMGNseDQ1b2phdHJ3Z2NsMiJ9.Qh6bVOZQ1HyAPtYB05xaXA'
             }).addTo(map);
 
+            this.legendEpaAdded = false;
+            this.legendScatsAdded = false;
             return map;
         },
 
@@ -192,6 +202,54 @@ $(function(){
             };
             Plotly.newPlot('trendsChart', trendData,layout);
             $('#charts-container').show();
+        },
+
+
+        addLegendEpa: function () {
+            let that = this;
+            this.legend = L.control({position: 'bottomright'});
+            this.legend.onAdd = function (map) {
+                let div = L.DomUtil.create('div', 'info legend');
+
+                div.innerHTML =
+                    '&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp EPA <br>' +
+                    '<i style="background:#349966"></i> ' +
+                    'Very Good (0 - 33) <br>'+
+                    '<i style="background:#359AFF"></i> ' +
+                    'Good (34 - 66) <br>' +
+                    '<i style="background:#FFFF00"></i> ' +
+                    'Fair (67 - 99) <br>' +
+                    '<i style="background:#FF0000"></i> ' +
+                    'Poor (100 - 149) <br>' +
+                    '<i style="background:#000000"></i> ' +
+                    'Very Poor (150+) <br>';
+                return div;
+            };
+            this.legend.addTo(this.map);
+        },
+
+
+        addLegendScats: function () {
+            let that = this;
+            this.legend = L.control({position: 'bottomright'});
+            this.legend.onAdd = function (map) {
+                let div = L.DomUtil.create('div', 'info legend');
+
+                div.innerHTML =
+                    '&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Scats <br>' +
+                    '<i style="background:#349966"></i> ' +
+                    'Very Less (0 - 1829) <br>'+
+                    '<i style="background:#359AFF"></i> ' +
+                    'Less (1830 - 3659) <br>' +
+                    '<i style="background:#FFFF00"></i> ' +
+                    'Medium (3660 - 5489) <br>' +
+                    '<i style="background:#FF0000"></i> ' +
+                    'High (5490 - 7319) <br>' +
+                    '<i style="background:#000000"></i> ' +
+                    'Very High (7320+) <br>';
+                return div;
+            };
+            this.legend.addTo(this.map);
         }
     };
 
