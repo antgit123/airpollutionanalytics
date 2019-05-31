@@ -64,6 +64,28 @@ let mongoDb = {
     },
     performAggregation: function (collectionName, aggregateArray) {
         return airpollutionDb.collection(collectionName).aggregate(aggregateArray);
+    },
+    resolveAllPromise: function(queryPromise,res){
+        let items = 0;
+        let response = {};
+        let that = this;
+        Promise.all(queryPromise).then(collectionValues => {
+            collectionValues.forEach(collectionValue => {
+                let namespace = collectionValue.ns.split(".")[1];
+                collectionValue.toArray((error, docs) => {
+                    if (docs) {
+                        response[namespace] = docs;
+                    } else {
+                        let error = {message: "No documents found"};
+                        res.send(error);
+                    }
+                    items++;
+                    if (items === queryPromise.length) {
+                        res.send(response);
+                    }
+                })
+            })
+        });
     }
 };
 
@@ -178,25 +200,7 @@ router.get('/getChartVisualizationData', (req, res, next) => {
         }
         queryPromise.push(mongoDb.performAggregation("DEE" + year + "Collection", dee_agg));
     });
-    let response = {};
-    let items = 0;
-    Promise.all(queryPromise).then(collectionValues => {
-        collectionValues.forEach(collectionValue => {
-            let namespace = collectionValue.ns.split(".")[1];
-            collectionValue.toArray((error, docs) => {
-                if (docs) {
-                    response[namespace] = docs;
-                } else {
-                    let error = {message: "No documents found"};
-                    res.send(error);
-                }
-                items++;
-                if (items === queryPromise.length) {
-                    mongoDb.resolveAndReturnResponse(response, res);
-                }
-            })
-        })
-    });
+    mongoDb.resolveAllPromise(queryPromise,res);
 });
 
 router.get('/getRegionEmissionData', (req, res, next) => {
@@ -224,6 +228,32 @@ router.get('/getRegionEmissionData', (req, res, next) => {
             res.send(error);
         }
     });
+});
+
+router.get('/getSummaryCorrelationData', (req, res, next) => {
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let years = ['2015','2017'];
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let substance = queryMap.get("substance");
+    let queryPromise = [];
+    let dee_agg = [
+        {$unwind: '$emissionData'},
+        {
+            $match: {
+                'emissionData.substance': substance,
+            }
+        },
+        {
+            $sort: {
+                'emissionData.quantity_in_kg': -1
+            }
+        }
+    ];
+    years.forEach(year => {
+        queryPromise.push(mongoDb.performAggregation("DEE" + year + "Collection", dee_agg));
+    });
+    mongoDb.resolveAllPromise(queryPromise,res);
 });
 
 router.get('/getEPAAirIndexData', (req, res, next) => {
@@ -256,34 +286,15 @@ router.get('/getChartData', (req, res, next) => {
 
     //Getting scats data
     let collectionName = "ScatsEPA" + currentYr + "Collection";
-    let filter_criteria = {SiteId: siteId};//Picking only 1 time to just have the emission data
+    let filter_criteria = {SiteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
     queryPromise.push(mongoDb.getFilteredDocuments(collectionName, filter_criteria));
 
     //Getting EPA particle concentration data
     let epaCollectionName = "EPA" + currentYr + "MeasurementsCollection";
-    let epa_filter_criteria = {SiteId: siteId};//Picking only 1 time to just have the emission data
+    let epa_filter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
 
-
-    let response = {};
-    let items = 0;
-    Promise.all(queryPromise).then(collectionValues => {
-        collectionValues.forEach(collectionValue => {
-            let namespace = collectionValue.ns.split(".")[1];
-            collectionValue.toArray((error, docs) => {
-                if (docs) {
-                    response[namespace] = docs;
-                } else {
-                    let error = {message: "No documents found"};
-                    res.send(error);
-                }
-                items++;
-                if (items === queryPromise.length) {
-                    mongoDb.resolveAndReturnResponse(response, res);
-                }
-            })
-        })
-    });
+    mongoDb.resolveAllPromise(queryPromise,res);
 });
 
 module.exports = router;

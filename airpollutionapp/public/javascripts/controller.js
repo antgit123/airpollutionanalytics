@@ -27,10 +27,10 @@ $(function () {
                         let substanceName = substance.Name;
                         let substanceId = substance.SubstanceId;
                         let substanceThreshold = substance.SubstanceThreshold;
-                        if (substanceName === 'Particulate Matter ≤2.5 µm (PM2.5)'){
+                        if (substanceName === 'Particulate Matter ≤2.5 µm (PM2.5)') {
                             substanceName = 'Particulate Matter 2.5 um';
                         }
-                        if(substanceName=== 'Particulate Matter ≤10.0 µm (PM10)'){
+                        if (substanceName === 'Particulate Matter ≤10.0 µm (PM10)') {
                             substanceName = 'Particulate Matter 10.0 um';
                         }
                         $("#substanceSelect").append("<option value='" + substanceName + "'>" + substanceName + "</option>");
@@ -166,11 +166,11 @@ $(function () {
             });
         },
 
-        findPolygonLayer: function(map,point) {
-            map.eachLayer(layer=>{
-                if(layer._layers){
-                    Object.values(layer._layers).forEach(shapeLayer =>{
-                        if(shapeLayer.getBounds().contains(point)){
+        findPolygonLayer: function (map, point) {
+            map.eachLayer(layer => {
+                if (layer._layers) {
+                    Object.values(layer._layers).forEach(shapeLayer => {
+                        if (shapeLayer.getBounds().contains(point)) {
                             return shapeLayer;
                         }
                     });
@@ -187,7 +187,7 @@ $(function () {
             this.regionList = [];
             this.regionCodeList = [];
             this.businessMarkerLayerGroup = [];
-            this.searchRegionData= [];
+            this.searchRegionData = [];
             this.businessMarker = L.AwesomeMarkers.icon({
                 icon: 'briefcase',
                 markerColor: 'black',
@@ -277,7 +277,6 @@ $(function () {
                         let currentEmission, currentAdmissionValue, styleValue;
                         if (choroplethParameter) {
                             if (choroplethParameter !== 'emission') {
-                                let year = that.optionMap.get("year");
                                 let key = that.phiduReferenceMap[choroplethParameter][0];
                                 if (that.phidu_data.length > 0) {
                                     that.max = that.phidu_data[0][key];
@@ -381,7 +380,7 @@ $(function () {
                     let code = feature.properties[that.code_key];
                     let name = feature.properties[that.name_key];
                     getLayerInfo(code, name, that, year, layer.layer);
-                    that.getEmissionData(code,year,layer.layer);
+                    that.getEmissionData(code, year, layer.layer);
                 });
 
                 function getLayerInfo(code, name, appObject, year, layer) {
@@ -496,7 +495,7 @@ $(function () {
             }
         },
 
-        getEmissionData: function ( code, year, layer) {
+        getEmissionData: function (code, year, layer) {
             let that = this;
             $.ajax({
                 type: "GET",
@@ -505,7 +504,7 @@ $(function () {
                 success: function (clusterResponse) {
                     if (clusterResponse && clusterResponse['data'].length > 0) {
                         that.regionEmissionBusinessList = clusterResponse['data'];
-                        that.createChart(layer,year);
+                        that.createChart(layer, year);
                     }
                 },
                 error: function () {
@@ -544,7 +543,7 @@ $(function () {
                 // loop through our density intervals and generate a label with a colored square for each interval
                 for (let i = 0; i < grades.length - 1; i++) {
                     div.innerHTML +=
-                        '<i style="background:' + that.getColor(grades[i] + 0.01,that.min,that.max) + ' "></i> ' +
+                        '<i style="background:' + that.getColor(grades[i] + 0.01, that.min, that.max) + ' "></i> ' +
                         grades[i].toFixed(2) + ' - ' + grades[i + 1].toFixed(2) + '<br>';
                 }
                 return div;
@@ -555,14 +554,14 @@ $(function () {
         createBusinessLayerGroup: function () {
             let that = this;
             let businessMarkers = [];
-            this.sortedBusinessList.forEach(business =>{
+            this.sortedBusinessList.forEach(business => {
                 let latitude = parseFloat(business['site_latitude']);
                 let longitude = parseFloat(business['site_longitude']);
                 let businessInfo = "<b>Name" + ":</b>" + business["facility_name"] + "</br>" +
-                   "<b>Activity:</b> "+ business["main_activities"] + "</br>" +
-                   "<b>Suburb:</b>"+ business["site_address_suburb"] + "</br>" +
-                   "<b>Total Emission (in Kg): </b>"+ business.emissionData["quantity_in_kg"];
-                let marker = L.marker([latitude,longitude],
+                    "<b>Activity:</b> " + business["main_activities"] + "</br>" +
+                    "<b>Suburb:</b>" + business["site_address_suburb"] + "</br>" +
+                    "<b>Total Emission (in Kg): </b>" + business.emissionData["quantity_in_kg"];
+                let marker = L.marker([latitude, longitude],
                     {icon: that.businessMarker}
                 ).bindPopup(businessInfo);
                 businessMarkers.push(marker);
@@ -570,15 +569,15 @@ $(function () {
             that.businessMarkerLayerGroup = L.layerGroup(businessMarkers);
         },
 
-        handleLayers:function(operation){
-            if(operation === "add") {
+        handleLayers: function (operation) {
+            if (operation === "add") {
                 this.addLayerToMap(this.businessMarkerLayerGroup);
-            }else{
+            } else {
                 this.removeMapLayer(this.businessMarkerLayerGroup);
             }
         },
 
-        createChart: function(layer){
+        createChart: function (layer) {
             let that = this;
             let code = layer.feature.properties[that.code_key];
             let areaName = layer.feature.properties[that.name_key];
@@ -587,58 +586,70 @@ $(function () {
 
             $.ajax({
                 type: "GET",
-                url: '/visualization/getChartVisualizationData?region='+code+'?substance='+$("#substanceSelect")[0].value,
+                url: '/visualization/getChartVisualizationData?region=' + code + '?substance=' + $("#substanceSelect")[0].value,
                 contentType: 'application/json',
                 success: function (response, body) {
                     that.prepareChartData(response, areaName);
                 },
-                error: function(error){
-                    that.showModal("Document failure","Failure in fetching the documents. Please check connectivity");
+                error: function (error) {
+                    that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
                 }
             });
-            that.createVariableAnalysisChart();
         },
 
-        createVariableAnalysisChart: function(){
-
-        },
-        prepareChartData: function(data, areaName){
+        prepareChartData: function (data, areaName) {
             let that = this;
             let phidu_years = ['2015', '2017'];
             that.emissionTrendMap = new Map();
+            that.phiduMapData = new Map();
             //only stores respiratory trends
             that.phiduTrendMap = new Map();
-            let emission_years = ['2015', '2016','2017', '2018'];
+            let emission_years = ['2015', '2016', '2017', '2018'];
             let emission_count = 0;
-            let phidu_count=0;
-            emission_years.forEach(year =>{
-               let emissionData = data["DEE"+year+"Collection"];
-               if(emissionData.length > 0) {
-                   let totalQuantity = 0;
-                   emissionData.forEach(business => {
-                       totalQuantity += business.emissionData['quantity_in_kg'];
-                   });
-                   that.emissionTrendMap.set(year,totalQuantity);
-                   $('#totalEmissionText')[0].innerText = totalQuantity;
-                   $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
-                   $('#lowestEmissionText')[0].innerText = that.min;
-                   $('#highestEmissionText')[0].innerText = that.max;
-               }
-               emission_count++;
+            let phidu_count = 0;
+            emission_years.forEach(year => {
+                let emissionData = data["DEE" + year + "Collection"];
+                if (emissionData.length > 0) {
+                    let totalQuantity = 0;
+                    emissionData.forEach(business => {
+                        totalQuantity += business.emissionData['quantity_in_kg'];
+                    });
+                    that.emissionTrendMap.set(year, totalQuantity);
+                    $('#totalEmissionText')[0].innerText = totalQuantity;
+                    $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
+                    if (that.optionMap.get("choroplethParameter") === "emission") {
+                        $('#statsChoroplethContainer1').hide();
+                        let choroplethParameter = that.optionMap.get("choroplethParameter");
+                        let year = that.optionMap.get("year");
+                        if(year === "2015" || year === "2017") {
+                            let key = that.phiduReferenceMap["respiratory"][0];
+                            let phidu_length = that.phidu_data.length;
+                            $('#lowestAdmissionText')[0].innerText = that.phidu_data[0][key];
+                            $('#highestAdmissionText')[0].innerText = that.phidu_data[phidu_length - 1][key];
+                        }
+                    } else {
+                        $('#statsChoroplethContainer2').hide();
+                        let businessLength = that.sortedBusinessList.length;
+                        $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength -1].emissionData['quantity_in_kg'];
+                        $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
+                    }
+                }
+                emission_count++;
             });
-            phidu_years.forEach(year =>{
-                let phidu_data = data["PHIDU"+year+"Collection"][0]["respiratory"];
-                let phidu_region = phidu_data.filter(region=>{
+            phidu_years.forEach(year => {
+                let phidu_data = data["PHIDU" + year + "Collection"][0]["respiratory"];
+                that.phiduMapData.set(year,phidu_data);
+                let phidu_region = phidu_data.filter(region => {
                     return region.lga_name === areaName;
                 });
                 that.phiduTrendMap.set(year, phidu_region[0]["respiratory_admissions"]);
                 phidu_count++;
             });
-            if(phidu_count === phidu_years.length && emission_count === emission_years.length){
-                that.showTrendsChart();
+            if (phidu_count === phidu_years.length && emission_count === emission_years.length) {
+                that.showTrendsChart(data);
             }
         },
-        showTrendsChart: function(){
+        showTrendsChart: function (data) {
             let that = this;
             let emissionYearKeys = Array.from(that.emissionTrendMap.keys());
             let phiduYearKeys = Array.from(that.phiduTrendMap.keys());
@@ -669,10 +680,109 @@ $(function () {
                     tickfont: {color: 'rgb(148, 103, 189)'},
                     overlaying: 'y',
                     side: 'right'
+                },
+                showlegend: true,
+                legend: {
+                    x: 1,
+                    y: 1
                 }
             };
-            Plotly.newPlot('trendsChart', trendData,layout);
+            Plotly.newPlot('trendsChart', trendData, layout);
+            that.showBusinessPieChart(data);
+        },
+        showBusinessPieChart: function(data) {
+            let that = this;
+            let year = that.optionMap.get("year");
+            let businessList = data["DEE"+year+"Collection"];
+            let emissionSum = 0;
+            if(businessList.length > 0) {
+                businessList.forEach(business => {
+                    emissionSum += business.emissionData['quantity_in_kg'];
+                })
+            }
+            let businessValuesArray =  [];
+            let businessLabelsArray = [];
+            businessList.forEach(business =>{
+                if(business.emissionData['quantity_in_kg']/emissionSum >= 0.02) {
+                    businessValuesArray.push(business.emissionData['quantity_in_kg'] / emissionSum);
+                    businessLabelsArray.push(business['facility_name']);
+                }
+            });
+            if(emissionSum > 0) {
+                let pie_data = [{
+                    values: businessValuesArray,
+                    labels: businessLabelsArray,
+                    type: 'pie'
+                }];
+
+                let layout ={
+                    title: "Business Emission contribution"
+                };
+                Plotly.newPlot('businessPieChart', pie_data, layout);
+            }
             $('#charts-container').show();
+            that.calculateSummaryCorrelation(data);
+        },
+        calculateSummaryCorrelation: function(data) {
+            let that = this;
+            let totalRegions = that.regionCodeList.length;
+            let correlationYears = ['2015', '2017'];
+            let correlationMap = new Map();
+            let positiveCorrelations = 0;
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getSummaryCorrelationData?substance=' + $("#substanceSelect")[0].value,
+                contentType: 'application/json',
+                success: function (response, body) {
+                    correlationYears.forEach(year =>{
+                        let totalEmission = 0;
+                        let phidu_admission = 0;
+                        let emissionRegionTotal = [];
+                        let phiduTotal = [];
+                        let emissionData = response["DEE"+ year + "Collection"];
+                        let phiduData = that.phiduMapData.get(year);
+                        that.regionCodeList.forEach(code =>{
+                            let substanceBusinessList = emissionData.filter(emissionNode =>{
+                                return emissionNode["location"] === code;
+                            });
+                            if(substanceBusinessList.length > 0){
+                                substanceBusinessList.forEach(substanceBusiness =>{
+                                    totalEmission += substanceBusiness.emissionData['quantity_in_kg'];
+                                });
+                            }
+                            let phidu_region = phiduData.filter(region =>{
+                                return region.lga_code === code;
+                            });
+                            phidu_admission = phidu_region[0]["respiratory_admissions"];
+                            phiduTotal.push(
+                                {
+                                    code: code,
+                                    admissions: phidu_admission
+                                }
+                            );
+                            emissionRegionTotal.push(
+                                {
+                                    code:code,
+                                    emission: totalEmission
+                                }
+                            );
+                        });
+                        correlationMap.set(year,{phiduSummary: phiduTotal, emissionSummary: emissionRegionTotal});
+                    });
+                    let correlationKeys = Array.from(correlationMap.keys());
+                    // that.regionCodeList.forEach(code =>{
+                    //
+                    //     let emission2015Summary = correlationMap.get("2015")["emissionSummary"];
+                    //     let emission2017Summary = correlationMap.get("2017")["emissionSummary"];
+                    //     let phidu2015Summary = correlationMap.get("2015")["phiduSummary"];
+                    //
+                    // })
+
+                },
+                error: function (error) {
+                    that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
+                }
+            });
         }
     };
     let that = this;

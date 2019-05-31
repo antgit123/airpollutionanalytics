@@ -66,17 +66,42 @@ block content
                                     h6 Number of businesses in region:
                                 div.d-inline.statsText
                                     span#totalBusinessText
-                                div.d-inline
-                                    h6 Highest business emission quantity:
-                                div.d-inline.statsText
-                                    span#highestEmissionText
-                                div.d-inline
-                                    h6 Lowest business emission quantity:
-                                div.d-inline.statsText
-                                    span#lowestEmissionText
+                                div#statsChoroplethContainer1
+                                    div.d-inline
+                                        h6 Highest business emission quantity:
+                                    div.d-inline.statsText
+                                        span#highestEmissionText
+                                    div.d-inline
+                                        h6 Lowest business emission quantity:
+                                    div.d-inline.statsText
+                                        span#lowestEmissionText
+                                div#statsChoroplethContainer2
+                                    div.d-inline
+                                        h6 Lowest respiratory cases reported:
+                                    div.d-inline.statsText
+                                        span#lowestAdmissionText
+                                    div.d-inline
+                                        h6 Highest respiratory cases reported:
+                                    div.d-inline.statsText
+                                        span#highestAdmissionText
+                                div#summaryStatsContainer
+                                    div.d-flex.justify-content-center
+                                        h5 Summary Results
+                                    div.d-inline
+                                        h6 Positive Correlations (%):
+                                    div.d-inline.statsText
+                                        span#positiveCorrelationsText
+                                    div.d-inline
+                                        h6 Negative Correlations (%):
+                                    div.d-inline.statsText
+                                        span#negativeCorrelationText
 
                 div.col-6
                     div#trendsChart
+
+            div.row
+                div#businessPieChart
+
     //for error and validation
     div#alert-modal.modal.fade
         div.modal-dialog
