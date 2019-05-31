@@ -42,6 +42,7 @@ block content
         div#charts-container.container
             div.row.d-flex.justify-content-center
                 h4 Visualization Charts
+                button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
             div.row
                 div.col-4
                     div#regionStatsContainer.container
@@ -68,36 +69,32 @@ block content
                                     span#totalBusinessText
                                 div#statsChoroplethContainer1
                                     div.d-inline
-                                        h6 Highest business emission quantity:
+                                        h6 Highest emission quantity (Victoria):
                                     div.d-inline.statsText
                                         span#highestEmissionText
                                     div.d-inline
-                                        h6 Lowest business emission quantity:
+                                        h6 Lowest emission quantity (Victoria):
                                     div.d-inline.statsText
                                         span#lowestEmissionText
                                 div#statsChoroplethContainer2
                                     div.d-inline
-                                        h6 Lowest respiratory cases reported:
+                                        h6 Lowest respiratory cases (Victoria):
                                     div.d-inline.statsText
                                         span#lowestAdmissionText
                                     div.d-inline
-                                        h6 Highest respiratory cases reported:
+                                        h6 Highest respiratory cases (Victoria):
                                     div.d-inline.statsText
                                         span#highestAdmissionText
-                                div#summaryStatsContainer
-                                    div.d-flex.justify-content-center
-                                        h5 Summary Results
-                                    div.d-inline
-                                        h6 Positive Correlations (%):
-                                    div.d-inline.statsText
-                                        span#positiveCorrelationsText
-                                    div.d-inline
-                                        h6 Negative Correlations (%):
-                                    div.d-inline.statsText
-                                        span#negativeCorrelationText
+                                div.d-inline
+                                    h6 Positive Correlations (%):
+                                div.d-inline.statsText
+                                    span#positiveCorrelationText
+                                div.d-inline
+                                    h6 Negative Correlations (%):
+                                div.d-inline.statsText
+                                    span#negativeCorrelationText
 
-                div.col-6
-                    div#trendsChart
+                div#trendsChart
 
             div.row
                 div#businessPieChart
