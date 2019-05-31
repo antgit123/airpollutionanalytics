@@ -63,6 +63,7 @@ $(function(){
 
             this.legendEpaAdded = false;
             this.legendScatsAdded = false;
+            this.info = L.control();
             return map;
         },
 
@@ -123,6 +124,20 @@ $(function(){
 
         createStationLayerGroup: function (stations) {
             let that = this;
+            that.info.onAdd = function (map) {
+                this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+                this.update();
+                return this._div;
+            };
+
+            // method that we will use to update the control based on feature properties passed
+            that.info.update = function (props) {
+                this._div.innerHTML = '<h4>Name of the Region</h4>' + (props ?
+                    '<b>' + props["siteName"] + '</b><br />'+
+                    "AirIndex:"+'<b>' + props["agiIndex"] + '</b><br />'
+                    : 'Hover over a region');
+            };
+            this.info.addTo(that.map);
             stations.forEach(station =>{
                 let latitude = station['latitude'];
                 let longitude = station['longitude'];
@@ -142,7 +157,12 @@ $(function(){
                     that.showChartView(e.target.featureInfo);
                 });
                 circlemarker.on('mouseover',function(ev) {
-                    circlemarker.openPopup();
+                    // circlemarker.openPopup();
+                    let layer = ev.target;
+                    that.info.update(layer.featureInfo)
+                });
+                circlemarker.on('mouseout', function(ev){
+                    that.info.update();
                 });
             });
         },
@@ -175,6 +195,12 @@ $(function(){
           that.timeAxis = [];
           let yrs = ['2014', '2015', '2016', '2017', '2018'];
 
+          that.chartsContainer = document.getElementById('charts-container');
+          that.mapContainer = document.getElementById('parent-visualization-container');
+          that.chartsContainer.scrollIntoView(true);
+          $('#moveToTop').on('click', () => {
+                that.mapContainer.scrollIntoView(true);
+            });
           yrs.forEach(year => {
               let collection = data['ScatsEPA' + year + 'Collection'];
               that[year + 'ScatsData'] = collection.sort(function(a,b){
