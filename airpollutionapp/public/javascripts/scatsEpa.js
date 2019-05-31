@@ -139,7 +139,6 @@ $(function(){
 
                 circlemarker.featureInfo = station;
                 circlemarker.on('click', function(e) {
-                    alert(e.target.featureInfo);
                     that.showChartView(e.target.featureInfo);
                 });
                 circlemarker.on('mouseover',function(ev) {
@@ -157,9 +156,8 @@ $(function(){
                 contentType: 'application/json',
                 success: function (response, body) {
                     if (response) {
-                        that.chartData = response.data;
-                        console.log(that.chartData);
-                        //that.showCOChart();
+                        that.processChartData(response);
+                        that.showParticleConcChart();
                     }
                 },
                 error: function () {
@@ -167,40 +165,135 @@ $(function(){
                 }
             });
         },
-        showCOChart: function(){
+
+        processChartData: function(data) {
+          let that = this;
+          that.currentYrEmissionData = data['EPA' + that.year + 'MeasurementsCollection'];
+          let collection = data['ScatsEPA' + that.year + 'Collection'];
+          that.currentYrScatsData = collection.sort(function(a,b){
+              return new Date(a.DateTime) - new Date(b.DateTime);
+          });
+          that.timeAxis = [];
+          that.currentYrEmissionData.forEach(function(emmisionData) {
+              emmisionData.hourlyData = emmisionData.hourlyData.sort(function (a, b) {
+                  return new Date('1970/01/01 ' + a.key) - new Date('1970/01/01 ' + b.key);
+              });
+          });
+          that.currentYrEmissionData[0]['hourlyData'].forEach(hourData => {
+            that.timeAxis.push(hourData.key);
+        });
+        },
+        showParticleConcChart: function(){
             let that = this;
-            let emissionYearKeys = Array.from(that.emissionTrendMap.keys());
-            let phiduYearKeys = Array.from(that.phiduTrendMap.keys());
-            let emissionYearValues = Array.from(that.emissionTrendMap.values());
-            let phiduYearValues = Array.from(that.phiduTrendMap.values());
-            let emissionTrace = {
-                x: emissionYearKeys,
-                y: emissionYearValues,
-                name: 'Emission data',
-                type: 'scatter'
+            let o3particleConcValue = [];
+            let coParticleConcValue = [];
+            let no2ParticleConcValue = [];
+            let bpm25ParticleConcValue = [];
+            let pm10ParticleConcValue = [];
+            let scatsData = that.currentYrScatsData.map(a => a['sum(count)']);
+
+            that.currentYrEmissionData.forEach(function(valuePerMonitorId) {
+                if(valuePerMonitorId.monitorId == 'CO') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        coParticleConcValue.push(hourData['avg_conc_value']);
+                    });
+                }
+                if(valuePerMonitorId.monitorId == 'NO2') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        no2ParticleConcValue.push(hourData['avg_conc_value']);
+                    });
+                }
+                if(valuePerMonitorId.monitorId == 'BPM2.5') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        bpm25ParticleConcValue.push(hourData['avg_conc_value']);
+                    });
+                }
+                if(valuePerMonitorId.monitorId == 'PM10') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        pm10ParticleConcValue.push(hourData['avg_conc_value']);
+                    });
+                }
+                if(valuePerMonitorId.monitorId == 'O3') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        o3particleConcValue.push(hourData['avg_conc_value']);
+                    });
+                }
+            });
+
+            let epaCOTrace = {
+                x: that.timeAxis,
+                y: coParticleConcValue,
+                name: 'Carbon monoxide',
+                type: 'scatter',
+                marker: {
+                    color: "#daf7a6",
+                }
             };
 
-            let phiduTrace = {
-                x: phiduYearKeys,
-                y: phiduYearValues,
-                name: 'Respiratory admissions',
+            let epano2Trace = {
+                x: that.timeAxis,
+                y: no2ParticleConcValue,
+                name: 'Nitrogen Dioxide',
+                type: 'scatter',
+                marker: {
+                    color: "#ffc300",
+                }
+            };
+
+            let epaO3Trace = {
+                x: that.timeAxis,
+                y: o3particleConcValue,
+                name: 'Ozone',
+                type: 'scatter',
+                marker: {
+                    color: "#ff5733",
+                }
+            };
+
+            let epabpm25Trace = {
+                x: that.timeAxis,
+                y: bpm25ParticleConcValue,
+                name: 'PM 2.5 particles',
+                type: 'scatter',
+                marker: {
+                    color: "#c70039",
+                }
+            };
+
+            let epabpm10Trace = {
+                x: that.timeAxis,
+                y: pm10ParticleConcValue,
+                name: 'PM 10 particles',
+                type: 'scatter',
+                marker: {
+                    color: "#581845",
+                }
+            };
+
+            let scatsTrace = {
+                x: that.timeAxis,
+                y: scatsData,
+                name: 'Traffic volume in that region',
                 yaxis: 'y2',
-                type: 'scatter'
+                type: 'scatter',
+                marker: {
+                    color: "#82adf6",
+                }
             };
 
-            let trendData = [emissionTrace, phiduTrace];
+            let trendData = [epaCOTrace, epano2Trace,epaO3Trace,epabpm25Trace,epabpm10Trace,scatsTrace];
             let layout = {
-                title: "Region Trends Chart",
+                title: "EPA Vs SCATS Chart",
                 yaxis: {title: 'Total emission quantity'},
                 yaxis2: {
-                    title: 'Respiratory Admissions',
+                    title: 'Traffic volume',
                     titlefont: {color: 'rgb(148, 103, 189)'},
                     tickfont: {color: 'rgb(148, 103, 189)'},
                     overlaying: 'y',
                     side: 'right'
                 }
             };
-            Plotly.newPlot('trendsChart', trendData,layout);
+            Plotly.newPlot('coChartView', trendData,layout);
             $('#charts-container').show();
         },
 

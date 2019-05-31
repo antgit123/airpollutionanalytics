@@ -262,7 +262,7 @@ router.get('/getEPAAirIndexData', (req, res, next) => {
     let queryMap = mongoDb.constructQueryMap(queryParams);
     let year = queryMap.get("year");
     let collectionName = "EPAAirIndex" + year + "Collection";
-    let filter_criteria = {dtg:"2018-01-01T11:00:00"};//Picking only 1 time to just have the emission data
+    let filter_criteria = {dtg:year+"-01-01T11:00:00"};//Picking only 1 time to just have the emission data
     let queryPromise = mongoDb.getFilteredDocuments(collectionName, filter_criteria);
     let response = {};
     queryPromise.toArray(function (err, docs) {
