@@ -233,7 +233,7 @@ router.get('/getRegionEmissionData', (req, res, next) => {
 router.get('/getSummaryCorrelationData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
-    let years = ['2015','2017'];
+    let years = ['2015','2016','2017','2018'];
     let queryMap = mongoDb.constructQueryMap(queryParams);
     let substance = queryMap.get("substance");
     let queryPromise = [];

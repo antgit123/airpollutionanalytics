@@ -183,10 +183,10 @@ $(function () {
 
         getShapeFile: function (response) {
             let that = this;
-            this.regionList = [];
             this.regionCodeList = [];
             this.businessMarkerLayerGroup = [];
             this.searchRegionData = [];
+            this.regionMap = new Map();
             this.businessMarker = L.AwesomeMarkers.icon({
                 icon: 'briefcase',
                 markerColor: 'black',
@@ -261,7 +261,7 @@ $(function () {
                         if (feature.properties) {
                             area_code = feature.properties[that.code_key];
                             area_name = feature.properties[that.name_key];
-                            that.regionList.push({"code": area_code, "name": area_name});
+                            that.regionMap.set(area_code, area_name);
                             if (that.regionCodeList.includes(feature.properties[that.code_key])) {
                                 that.searchRegionData.push(new L.GeoJSON(feature));
                             }
@@ -294,7 +294,7 @@ $(function () {
                                 }
 
                             } else {
-                                let year = that.optionMap.get("year");
+                                // let year = that.optionMap.get("year");
                                 let no_business = that.sortedBusinessList.length;
                                 if (no_business > 0) {
                                     that.max = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
@@ -447,6 +447,7 @@ $(function () {
                         that.selectedLayer.bringToFront();
                     }
                     that.info.update(that.selectedLayer.feature.properties);
+                    //potential delete
                     let popup = L.popup()
                         .setLatLng(e.latlng)
                         .setContent(that.selectedLayer.feature.properties[that.name_key])
@@ -606,6 +607,10 @@ $(function () {
             let emission_years = ['2015', '2016', '2017', '2018'];
             let emission_count = 0;
             let phidu_count = 0;
+            let year = that.optionMap.get('year');
+            if (year === '2015' || year === '2017') {
+                // let admissions = that.phidu_data[0]["respira"]
+            }
             emission_years.forEach(year => {
                 let emissionData = data["DEE" + year + "Collection"];
                 if (emissionData.length > 0) {
@@ -618,23 +623,24 @@ $(function () {
                     $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
                     if (that.optionMap.get("choroplethParameter") === "emission") {
                         $('#statsChoroplethContainer1').hide();
-                        $('#statsChoroplethContainer2').show();
                         let year = that.optionMap.get("year");
                         if (year === "2015" || year === "2017") {
                             let key = that.phiduReferenceMap["respiratory"][0];
-                            let phidu_length = that.phidu_data.length;
                             let phiduData = that.phidu_data[0]["respiratory"];
-                            $('#lowestAdmissionText')[0].innerText = phiduData[0][key] + "  (" + phiduData[0]["lga_name"] + ")";
-                            $('#highestAdmissionText')[0].innerText = phiduData[phidu_length - 1][key] + "  (" + phiduData[0][phidu_length - 1] + ")";
+                            $('#lowestAdmissionText')[0].innerText = phiduData[phiduData.length - 1][key] + "  (" + phiduData[0]["lga_name"] + ")";
+                            $('#highestAdmissionText')[0].innerText = phiduData[0][key] + "  (" + phiduData[phiduData.length - 1]["lga_name"] + ")";
+                            $('#statsChoroplethContainer2').show();
+                        } else {
+                            $('#statsChoroplethContainer2').hide();
                         }
                     } else {
                         $('#statsChoroplethContainer1').show();
                         $('#statsChoroplethContainer2').hide();
                         let businessLength = that.sortedBusinessList.length;
-                        let lowest_code = that.sortedBusinessList[businessLength -1]["location"];
+                        let lowest_code = that.sortedBusinessList[businessLength - 1]["location"];
                         let highest_code = that.sortedBusinessList[0]["location"];
                         // let lowestBusinessRegion = that.map.eachLa
-                        $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'] ;
+                        $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'];
                         $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
                     }
                 }
@@ -650,10 +656,10 @@ $(function () {
                 phidu_count++;
             });
             if (phidu_count === phidu_years.length && emission_count === emission_years.length) {
-                that.showTrendsChart(data);
+                that.showTrendsChart(data, areaName);
             }
         },
-        showTrendsChart: function (data) {
+        showTrendsChart: function (data, areaName) {
             let that = this;
             let emissionYearKeys = Array.from(that.emissionTrendMap.keys());
             let phiduYearKeys = Array.from(that.phiduTrendMap.keys());
@@ -692,9 +698,9 @@ $(function () {
                 }
             };
             Plotly.newPlot('trendsChart', trendData, layout);
-            that.showBusinessPieChart(data);
+            that.showBusinessPieChart(data, areaName);
         },
-        showBusinessPieChart: function (data) {
+        showBusinessPieChart: function (data, areaName) {
             let that = this;
             let year = that.optionMap.get("year");
             let businessList = data["DEE" + year + "Collection"];
@@ -713,30 +719,15 @@ $(function () {
                 }
             });
             if (emissionSum > 0) {
-                let pie_data = [{
-                    values: businessValuesArray,
-                    labels: businessLabelsArray,
-                    type: 'pie'
-                }];
-
-                let layout = {
-                    title: "Business Emission contribution"
-                };
-                Plotly.newPlot('businessPieChart', pie_data, layout);
+                let title = areaName + " - Business Emission contribution";
+                that.constructPieChart(businessValuesArray, businessLabelsArray, title, 'businessPieChart');
             }
-            $('#charts-container').show();
-            that.chartsContainer = document.getElementById('charts-container');
-            that.mapContainer = document.getElementById('parent-visualization-container');
-            that.chartsContainer.scrollIntoView(true);
-            $('#moveToTop').on('click', ()=>{
-                that.mapContainer.scrollIntoView(true);
-            });
             that.calculateSummaryCorrelation(data);
         },
         calculateSummaryCorrelation: function (data) {
             let that = this;
             let totalRegions = that.regionCodeList.length;
-            let correlationYears = ['2015', '2017'];
+            let correlationYears = ['2015', '2016', '2017', '2018'];
             let correlationMap = new Map();
             let positiveCorrelations = 0;
             $.ajax({
@@ -749,7 +740,6 @@ $(function () {
                         let emissionRegionTotal = [];
                         let phiduTotal = [];
                         let emissionData = response["DEE" + year + "Collection"];
-                        let phiduData = that.phiduMapData.get(year);
                         that.regionCodeList.forEach(code => {
                             let totalEmission = 0;
                             let substanceBusinessList = emissionData.filter(emissionNode => {
@@ -760,58 +750,140 @@ $(function () {
                                     totalEmission += substanceBusiness.emissionData['quantity_in_kg'];
                                 });
                             }
-                            let phidu_region = phiduData.filter(region => {
-                                return region.lga_code === code;
-                            });
-                            phidu_admission = phidu_region[0]["respiratory_admissions"];
-                            phiduTotal.push(
-                                {
-                                    code: code,
-                                    admissions: phidu_admission
-                                }
-                            );
                             emissionRegionTotal.push(
                                 {
                                     code: code,
                                     emission: totalEmission
                                 }
                             );
+                            if (year === '2015' || year === '2017') {
+                                let phiduData = that.phiduMapData.get(year);
+                                let phidu_region = phiduData.filter(region => {
+                                    return region.lga_code === code;
+                                });
+                                if (phidu_region.length > 0) {
+                                    phidu_admission = phidu_region[0]["respiratory_admissions"];
+                                }
+                                phiduTotal.push(
+                                    {
+                                        code: code,
+                                        admissions: phidu_admission
+                                    }
+                                );
+                            }
                         });
                         correlationMap.set(year, {phiduSummary: phiduTotal, emissionSummary: emissionRegionTotal});
                     });
 
-                    let emission2015Summary = correlationMap.get("2015")["emissionSummary"];
-                    let emission2017Summary = correlationMap.get("2017")["emissionSummary"];
-                    let phidu2015Summary = correlationMap.get("2015")["phiduSummary"];
-                    let phidu2017Summary = correlationMap.get("2017")["phiduSummary"];
+                    let correlationMapKeys = Array.from(correlationMap.keys());
+                    correlationMapKeys.forEach(year=>{
+                        that["emission"+year+"Summary"] = correlationMap.get(year)["emissionSummary"];
+                    });
+                    that.phidu2015Summary = correlationMap.get("2015")["phiduSummary"];
+                    that.phidu2017Summary = correlationMap.get("2017")["phiduSummary"];
+                    that.showRegionContributorChart(data);
 
-                    for(let i =0 ;i< emission2015Summary.length;i++){
-                        let emission2015Value = emission2015Summary[i]["emission"];
-                        let emission2017Value = emission2017Summary[i]["emission"];
-                        let phidu2015Value = phidu2015Summary[i]["admissions"];
-                        let phidu2017Value = phidu2017Summary[i]["admissions"];
+                    for (let i = 0; i < that.emission2015Summary.length; i++) {
+                        let emission2015Value = that.emission2015Summary[i]["emission"];
+                        let emission2017Value = that.emission2017Summary[i]["emission"];
+                        let phidu2015Value = that.phidu2015Summary[i]["admissions"];
+                        let phidu2017Value = that.phidu2017Summary[i]["admissions"];
 
                         //if current emission Value is more than previous emission
-                        if(emission2017Value - emission2015Value > 0){
+                        if (emission2017Value - emission2015Value > 0) {
                             //if current respiratory cases more than previous then correlation found
-                            if(phidu2017Value - phidu2015Value > 0){
+                            if (phidu2017Value - phidu2015Value > 0) {
                                 positiveCorrelations++;
                             }
-                         //else check correlation if repsiratory cases decrease when decrease in emission
-                        }else if(emission2017Value - emission2015Value < 0){
-                            if(phidu2017Value - phidu2015Value < 0){
+                            //else check correlation if repsiratory cases decrease when decrease in emission
+                        } else if (emission2017Value - emission2015Value < 0) {
+                            if (phidu2017Value - phidu2015Value < 0) {
                                 positiveCorrelations++;
                             }
                         }
                     }
                     let negativeCorrelations = totalRegions - positiveCorrelations;
-                    $('#positiveCorrelationText')[0].innerText = Math.round((positiveCorrelations/totalRegions) * 100);
-                    $('#negativeCorrelationText')[0].innerText = Math.round((negativeCorrelations/totalRegions) * 100);
+                    $('#positiveCorrelationText')[0].innerText = Math.round((positiveCorrelations / totalRegions) * 100);
+                    $('#negativeCorrelationText')[0].innerText = Math.round((negativeCorrelations / totalRegions) * 100);
+                    //possible add for correlation check
+                    let year = that.optionMap.get("year");
+                    // if(year === '2015' || year === '2017')
                 },
                 error: function (error) {
                     that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
                 }
             });
+            $('#charts-container').show();
+            that.chartsContainer = document.getElementById('charts-container');
+            that.mapContainer = document.getElementById('parent-visualization-container');
+            that.chartsContainer.scrollIntoView(true);
+            $('#moveToTop').on('click', () => {
+                that.mapContainer.scrollIntoView(true);
+            });
+        },
+        showRegionContributorChart: function (data) {
+            let that = this;
+            let year = that.optionMap.get("year");
+            let choroplethParameter = that.optionMap.get("choroplethParameter");
+            if (choroplethParameter === "emission") {
+                //if emission is parameter show top region contributors for the emission for substance
+                let total_region = 0;
+                let regionalValues = [];
+                let regionalLabels = [];
+                let sum = 0;
+                let year_key = "emission" + year + "Summary";
+                that[year_key] = that.sortArray(that[year_key], "emission");
+                that[year_key].forEach(summaryNode => {
+                    total_region += summaryNode["emission"];
+                });
+                for (let i = 0; i < that[year_key].length; i++) {
+                    let emission_value = that[year_key][i]["emission"];
+                    let emission_region = that.regionMap.get(that[year_key][i]["code"]);
+                    sum += emission_value;
+                    if (emission_value / total_region >= 0.02 && regionalValues.length < 10) {
+                        regionalValues.push(emission_value / total_region);
+                        regionalLabels.push(emission_region);
+                    }
+                }
+                that.constructPieChart(regionalValues, regionalLabels, "Top Contributors- Regions (Emission)", "regionContributionChart");
+            } else {
+                //if health related parameter is selected, show top contributors for parameter selected
+                let key = that.phiduReferenceMap[choroplethParameter][0];
+                let titleValue = that.phiduReferenceMap[choroplethParameter][1];
+                let totalCases = 0;
+                let phiduValuesArray = [];
+                let phiduLabelsArray = [];
+                that.phidu_data.forEach(phiduNode => {
+                    totalCases += phiduNode[key];
+                });
+                for (let i = 0; i < that.phidu_data.length; i++) {
+                    let admissionPercent = (that.phidu_data[i][key] / totalCases) * 100;
+                    let area_name = that.phidu_data[i]["lga_name"];
+                    if (admissionPercent >= 2) {
+                        phiduValuesArray.push(admissionPercent);
+                        phiduLabelsArray.push(area_name);
+                    }
+                }
+                let title = "Top contributors - Regions" + "(" + titleValue + ")";
+                that.constructPieChart(phiduValuesArray, phiduLabelsArray, title, "regionContributionChart");
+            }
+        },
+        sortArray: function (array, value) {
+            return array.sort(function (obj1, obj2) {
+                return obj1[value] - obj2[value];
+            });
+        },
+        constructPieChart: function (valueArray, labelArray, title, div) {
+            let pie_data = [{
+                values: valueArray,
+                labels: labelArray,
+                type: 'pie'
+            }];
+
+            let layout = {
+                title: title
+            };
+            Plotly.newPlot(div, pie_data, layout, {responsive: true});
         }
     };
     let that = this;
