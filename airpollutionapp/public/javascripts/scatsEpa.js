@@ -273,7 +273,7 @@ $(function(){
             let scatsTrace = {
                 x: that.timeAxis,
                 y: scatsData,
-                name: 'Traffic volume in that region',
+                name: 'Traffic volume count in that region',
                 yaxis: 'y2',
                 type: 'scatter',
                 marker: {
@@ -286,7 +286,7 @@ $(function(){
                 title: "EPA Vs SCATS Chart",
                 yaxis: {title: 'Total emission quantity'},
                 yaxis2: {
-                    title: 'Traffic volume count',
+                    title: 'Traffic volume',
                     titlefont: {color: 'rgb(148, 103, 189)'},
                     tickfont: {color: 'rgb(148, 103, 189)'},
                     overlaying: 'y',
