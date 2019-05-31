@@ -280,18 +280,36 @@ router.get('/getChartData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
     let queryMap = mongoDb.constructQueryMap(queryParams);
+    let years = ['2014','2015', '2016','2017', '2018'];
     let currentYr = queryMap.get("year");
     let siteId = queryMap.get("siteId");
     let queryPromise = [];
 
-    //Getting scats data
-    let collectionName = "ScatsEPA" + currentYr + "Collection";
-    let filter_criteria = {SiteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
-    queryPromise.push(mongoDb.getFilteredDocuments(collectionName, filter_criteria));
+    years.forEach(year => {
+        //Scats aggregated data for that region
+        let collectionName = "ScatsEPA" + year + "Collection";
+        let filter_criteria = {SiteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
+        queryPromise.push(mongoDb.getFilteredDocuments(collectionName, filter_criteria));
 
-    //Getting EPA particle concentration data
+        //EPA Air index data for that region
+        let epaAqicollectionName = "EPAAirIndex" + year + "Collection";
+        let epaAqifilter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
+        queryPromise.push(mongoDb.getFilteredDocuments(epaAqicollectionName, epaAqifilter_criteria));
+    });
+    //Getting scats data
+
+
+    //Getting EPA data for that selected year
     let epaCollectionName = "EPA" + currentYr + "MeasurementsCollection";
-    let epa_filter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
+    let epa_filter_criteria = {$and:[{siteId:parseInt(siteId)},
+            {$or:[
+                {monitorId: "CO"},
+                {monitorId:"NO2"},
+                {monitorId: "O3"},
+                {monitorId:"BPM2.5"},
+                {monitorId: "BPM10"},
+                {monitorId:"SWS"},]}]};
+    // let epa_filter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
 
     mongoDb.resolveAllPromise(queryPromise,res);
