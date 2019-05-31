@@ -223,7 +223,7 @@ $(function(){
             let epaCOTrace = {
                 x: that.timeAxis,
                 y: coParticleConcValue,
-                name: 'Carbon monoxide',
+                name: 'Carbon monoxide (ppm)',
                 type: 'scatter',
                 marker: {
                     color: "#daf7a6",
@@ -233,7 +233,7 @@ $(function(){
             let epano2Trace = {
                 x: that.timeAxis,
                 y: no2ParticleConcValue,
-                name: 'Nitrogen Dioxide',
+                name: 'Nitrogen Dioxide (ppb)',
                 type: 'scatter',
                 marker: {
                     color: "#ffc300",
@@ -243,7 +243,7 @@ $(function(){
             let epaO3Trace = {
                 x: that.timeAxis,
                 y: o3particleConcValue,
-                name: 'Ozone',
+                name: 'Ozone (ppb)',
                 type: 'scatter',
                 marker: {
                     color: "#ff5733",
@@ -253,7 +253,7 @@ $(function(){
             let epabpm25Trace = {
                 x: that.timeAxis,
                 y: bpm25ParticleConcValue,
-                name: 'PM 2.5 particles',
+                name: 'PM 2.5 particles (µ/m3)',
                 type: 'scatter',
                 marker: {
                     color: "#c70039",
@@ -263,7 +263,7 @@ $(function(){
             let epabpm10Trace = {
                 x: that.timeAxis,
                 y: pm10ParticleConcValue,
-                name: 'PM 10 particles',
+                name: 'PM 10 particles (µ/m3)',
                 type: 'scatter',
                 marker: {
                     color: "#581845",
@@ -286,7 +286,7 @@ $(function(){
                 title: "EPA Vs SCATS Chart",
                 yaxis: {title: 'Total emission quantity'},
                 yaxis2: {
-                    title: 'Traffic volume',
+                    title: 'Traffic volume count',
                     titlefont: {color: 'rgb(148, 103, 189)'},
                     tickfont: {color: 'rgb(148, 103, 189)'},
                     overlaying: 'y',
