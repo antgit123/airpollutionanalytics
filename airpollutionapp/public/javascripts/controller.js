@@ -241,7 +241,7 @@ $(function () {
 
                 that.info = L.control();
                 $('#showBusinessContainer').show();
-                $('#searchContainer').show();
+                // $('#searchContainer').show();
                 phidu_key === undefined ? that.phidu_data = undefined : that.phidu_data = response[phidu_key];
                 that.createBusinessLayerGroup();
 
@@ -620,28 +620,6 @@ $(function () {
                     that.emissionTrendMap.set(year, totalQuantity);
                     $('#totalEmissionText')[0].innerText = totalQuantity.toFixed(2);
                     $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
-                    if (that.optionMap.get("choroplethParameter") === "emission") {
-                        $('#statsChoroplethContainer1').hide();
-                        let year = that.optionMap.get("year");
-                        if (year === "2015" || year === "2017") {
-                            let key = that.phiduReferenceMap["respiratory"][0];
-                            let phiduData = that.phidu_data[0]["respiratory"];
-                            $('#lowestAdmissionText')[0].innerText = phiduData[phiduData.length - 1][key] + "  (" + phiduData[0]["lga_name"] + ")";
-                            $('#highestAdmissionText')[0].innerText = phiduData[0][key] + "  (" + phiduData[phiduData.length - 1]["lga_name"] + ")";
-                            $('#statsChoroplethContainer2').show();
-                        } else {
-                            $('#statsChoroplethContainer2').hide();
-                        }
-                    } else {
-                        $('#statsChoroplethContainer1').show();
-                        $('#statsChoroplethContainer2').hide();
-                        let businessLength = that.sortedBusinessList.length;
-                        let lowest_code = that.sortedBusinessList[businessLength - 1]["location"];
-                        let highest_code = that.sortedBusinessList[0]["location"];
-                        // let lowestBusinessRegion = that.map.eachLa
-                        $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'];
-                        $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
-                    }
                 }
                 emission_count++;
             });
@@ -654,6 +632,35 @@ $(function () {
                 that.phiduTrendMap.set(year, phidu_region[0]["respiratory_admissions"]);
                 phidu_count++;
             });
+
+            let choroplethParameter = that.optionMap.get("choroplethParameter");
+            if (choroplethParameter === "emission") {
+                $('#statsChoroplethContainer1').hide();
+                let year = that.optionMap.get("year");
+                if (year === "2015" || year === "2017") {
+                    let key = that.phiduReferenceMap["respiratory"][0];
+                    let phiduData = that.phidu_data[0]["respiratory"];
+                    let admission_value = phiduData[phiduData.length -1][key];
+                    if(admission_value === null){
+                        admission_value = 0;
+                    }
+                    $('#lowestAdmissionText')[0].innerText = admission_value+ "  (" + phiduData[phiduData.length -1]["lga_name"] + ")";
+                    $('#highestAdmissionText')[0].innerText = phiduData[0][key] + "  (" + phiduData[0]["lga_name"] + ")";
+                    $('#statsChoroplethContainer2').show();
+                } else {
+                    $('#statsChoroplethContainer2').hide();
+                }
+            } else {
+                $('#statsChoroplethContainer1').show();
+                $('#statsChoroplethContainer2').hide();
+                let businessLength = that.sortedBusinessList.length;
+                let lowest_code = that.sortedBusinessList[businessLength - 1]["location"];
+                let highest_code = that.sortedBusinessList[0]["location"];
+                // let lowestBusinessRegion = that.map.eachLa
+                $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'];
+                $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
+            }
+
             if (phidu_count === phidu_years.length && emission_count === emission_years.length) {
                 that.showTrendsChart(data, areaName);
             }
