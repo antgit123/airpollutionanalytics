@@ -65,6 +65,9 @@ let mongoDb = {
     performAggregation: function (collectionName, aggregateArray) {
         return airpollutionDb.collection(collectionName).aggregate(aggregateArray);
     },
+    getSortedDocuments: function(collectionName,searchObject, sortObject){
+        return airpollutionDb.find(searchObject).sort(sortObject);
+    },
     resolveAllPromise: function(queryPromise,res){
         let items = 0;
         let response = {};
@@ -313,6 +316,23 @@ router.get('/getChartData', (req, res, next) => {
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
 
     mongoDb.resolveAllPromise(queryPromise,res);
+});
+
+router.get('/getAQIScatsDataPerTime', (req, res, next) => {
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let year = queryMap.get("year");
+    let time = queryMap.get("time");
+    let epaAirIndexCollection = "EPAAirIndex" + year + "Collection";
+    let scatsEpaCollection = "ScatsEPA"+ year + "Collection";
+    let filter_criteria = {dtg:time.substring(0, time.length-5)};
+    let sort_criteria_epa = {siteName: 1};
+    let sort_criteria_Scats = {Name: 1};//Picking only 1 time to just have the emission data
+    let queryPromise = [];
+    queryPromise.push(mongoDb.getSortedDocuments(epaAirIndexCollection,filter_criteria,sort_criteria_epa));
+    queryPromise.push(mongoDb.getSortedDocuments(scatsEpaCollection,filter_criteria,sort_criteria_Scats));
+    mongoDb.resolveAllPromise(queryPromise, res);
 });
 
 module.exports = router;
