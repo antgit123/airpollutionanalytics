@@ -622,7 +622,6 @@ $(function () {
                         totalQuantity += business.emissionData['quantity_in_kg'];
                     });
                     that.emissionTrendMap.set(year, totalQuantity);
-                    $('#totalEmissionText')[0].innerText = totalQuantity.toFixed(2);
                     $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
                 }
                 emission_count++;
@@ -636,7 +635,7 @@ $(function () {
                 that.phiduTrendMap.set(year, phidu_region[0]["respiratory_admissions"]);
                 phidu_count++;
             });
-
+            $('#totalEmissionText')[0].innerText = that.emissionTrendMap.get(year).toFixed(2);
             let choroplethParameter = that.optionMap.get("choroplethParameter");
             if (choroplethParameter === "emission") {
                 $('#statsChoroplethContainer1').hide();
@@ -644,11 +643,11 @@ $(function () {
                 if (year === "2015" || year === "2017") {
                     let key = that.phiduReferenceMap["respiratory"][0];
                     let phiduData = that.phidu_data[0]["respiratory"];
-                    let admission_value = phiduData[phiduData.length -1][key];
-                    if(admission_value === null){
+                    let admission_value = phiduData[phiduData.length - 1][key];
+                    if (admission_value === null) {
                         admission_value = 0;
                     }
-                    $('#lowestAdmissionText')[0].innerText = admission_value+ "  (" + phiduData[phiduData.length -1]["lga_name"] + ")";
+                    $('#lowestAdmissionText')[0].innerText = admission_value + "  (" + phiduData[phiduData.length - 1]["lga_name"] + ")";
                     $('#highestAdmissionText')[0].innerText = phiduData[0][key] + "  (" + phiduData[0]["lga_name"] + ")";
                     $('#statsChoroplethContainer2').show();
                 } else {
@@ -681,8 +680,8 @@ $(function () {
                 type: 'scatter'
             };
             let phiduTrace = {};
-            if(choroplethParameter !== "isch_heart" && choroplethParameter !== "stroke"
-                 && choroplethParameter !== "copd" && choroplethParameter !== "asthma") {
+            if (choroplethParameter !== "isch_heart" && choroplethParameter !== "stroke"
+                && choroplethParameter !== "copd" && choroplethParameter !== "asthma") {
                 phiduTrace = {
                     x: phiduYearKeys,
                     y: phiduYearValues,
@@ -788,8 +787,8 @@ $(function () {
                     });
 
                     let correlationMapKeys = Array.from(correlationMap.keys());
-                    correlationMapKeys.forEach(year=>{
-                        that["emission"+year+"Summary"] = correlationMap.get(year)["emissionSummary"];
+                    correlationMapKeys.forEach(year => {
+                        that["emission" + year + "Summary"] = correlationMap.get(year)["emissionSummary"];
                     });
                     that.phidu2015Summary = correlationMap.get("2015")["phiduSummary"];
                     that.phidu2017Summary = correlationMap.get("2017")["phiduSummary"];
@@ -797,26 +796,37 @@ $(function () {
 
                     for (let i = 0; i < that.emission2015Summary.length; i++) {
                         let emission2015Value = that.emission2015Summary[i]["emission"];
-                        let emission2017Value = that.emission2017Summary[i]["emission"];
-                        let phidu2015Value = that.phidu2015Summary[i]["admissions"];
-                        let phidu2017Value = that.phidu2017Summary[i]["admissions"];
+                        let emission2015Code = that.emission2015Summary[i]["code"];
+                        let emission2017Node = that.emission2017Summary.filter(node => {
+                            return node["code"] === emission2015Code;
+                        });
+                        let phidu2015Node = that.phidu2015Summary.filter(node => {
+                            return node["code"] === emission2015Code;
+                        });
+                        let phidu2017Node = that.phidu2017Summary.filter(node => {
+                            return node["code"] === emission2015Code;
+                        });
+                        let emission2017Value = emission2017Node[0]["emission"];
+                        let phidu2015Value = phidu2015Node[0]["admissions"];
+                        let phidu2017Value = phidu2017Node[0]["admissions"];
 
                         //if current emission Value is more than previous emission
-                        if (emission2017Value - emission2015Value > 0) {
+                        if ((emission2017Value - emission2015Value) > 0) {
                             //if current respiratory cases more than previous then correlation found
-                            if (phidu2017Value - phidu2015Value > 0) {
+                            if ((phidu2017Value - phidu2015Value) > 0) {
                                 positiveCorrelations++;
                             }
-                            //else check correlation if repsiratory cases decrease when decrease in emission
-                        } else if (emission2017Value - emission2015Value < 0) {
-                            if (phidu2017Value - phidu2015Value < 0) {
+                        }    //else check correlation if repsiratory cases decrease when decrease in emission
+                        // } else
+                        if ((emission2017Value - emission2015Value) < 0) {
+                            if ((phidu2017Value - phidu2015Value) < 0) {
                                 positiveCorrelations++;
                             }
                         }
                     }
                     let negativeCorrelations = totalRegions - positiveCorrelations;
-                    $('#positiveCorrelationText')[0].innerText = Math.round((positiveCorrelations / totalRegions) * 100);
-                    $('#negativeCorrelationText')[0].innerText = Math.round((negativeCorrelations / totalRegions) * 100);
+                    $('#positiveCorrelationText')[0].innerText = ((positiveCorrelations/totalRegions) * 100).toFixed(2);
+                    $('#negativeCorrelationText')[0].innerText = ((negativeCorrelations / totalRegions) * 100).toFixed(2);
                     $('#correlationsContainer').show();
                     //possible add for correlation check
                     let year = that.optionMap.get("year");
@@ -895,7 +905,7 @@ $(function () {
 
             let layout = {
                 title: title,
-                legend:{
+                legend: {
                     x: 1,
                     y: 1
                 }
