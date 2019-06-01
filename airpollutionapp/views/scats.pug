@@ -24,8 +24,7 @@ block content
                 div#scatsEpaMapid
         div#charts-container.container
             div.row.d-flex.justify-content-center
-                h4 Visualization Charts
-                button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
+                h4#chartTitle
             div#particleConcChartView
             div#AqiWindScatsChartView
             div.row
@@ -33,6 +32,8 @@ block content
                     div#scatsTrendChartView
                 div.col-6
                     div#epaAqitrendChartView
+            div.row.d-flex.justify-content-center
+                button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
 
     //for error and validation
     div#alert-modal.modal.fade

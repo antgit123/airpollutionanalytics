@@ -6,6 +6,7 @@ $(function(){
 
             $('#submitOptionsForScatsEpa').on('click',()=>{
                 that.year = $("#yearSelectForScatsEpa")[0].value;
+                that.reInitializeCharts();
                 that.removeAllMapLayers(that.map);
                 that.updateTimeOptions(that.map, that.year);
                 that.addEpaLayer(that.year);
@@ -37,7 +38,8 @@ $(function(){
         updateTimeOptions: function(map, year) {
             var testoptions = {
                 timeInterval: year+'-01-01T00:00:00.0Z/' + year + '-01-01T23:59:59.999Z',
-                period: "PT1H"
+                period: "PT1H",
+                currentTime: Date.parse(year+"-01-01T00:00:00.0Z")
             };
             map.timeDimension.initialize(testoptions)
         },
@@ -50,7 +52,8 @@ $(function(){
                 timeDimensionControl: true,
                 timeDimensionOptions: {
                     timeInterval: '2018-01-01T00:00:00.0Z/2018-01-01T23:59:59.999Z',
-                    period: "PT1H"
+                    period: "PT1H",
+                    currentTime: Date.parse("2018-01-01T00:00:00.0Z")
                 },
                 center: [-37.814, 144.96332],
             });
@@ -65,6 +68,22 @@ $(function(){
             this.legendScatsAdded = false;
             this.info = L.control();
             return map;
+        },
+
+        reInitializeCharts: function() {
+            let that = this;
+            if(this.chartsContainer){
+                $(this.chartsContainer).hide()
+            }
+
+            this.timeAxis = [];
+            this.currentYrEPAParticleConcData = [];
+            let yrs = ['2014', '2015', '2016', '2017', '2018'];
+            yrs.forEach(year => {
+                that[year + 'ScatsData'] = [];
+                that[year + 'EpaAqiIndexData'] = [];
+            });
+
         },
 
         removeMapLayer: function (layerGroup) {
@@ -97,7 +116,6 @@ $(function(){
             });
 
             var wmsTimeLayer = L.timeDimension.layer.wms(wmsEPALayer, {
-                msVersion: '1.1.0',
                 proxy: proxy
             });
             this.addLayerToMap(wmsTimeLayer);
@@ -115,7 +133,6 @@ $(function(){
             });
 
             var wmsScatsTimeLayer = L.timeDimension.layer.wms(wmsScatsLayer, {
-                msVersion: '1.1.0',
                 proxy: proxy
             });
 
@@ -133,31 +150,26 @@ $(function(){
             // method that we will use to update the control based on feature properties passed
             that.info.update = function (props) {
                 this._div.innerHTML = '<h4>Name of the Region</h4>' + (props ?
-                    '<b>' + props["siteName"] + '</b><br />'+
-                    "AirIndex:"+'<b>' + props["agiIndex"] + '</b><br />'
+                    '<b>' + props["siteName"] + '</b><br />'
                     : 'Hover over a region');
             };
             this.info.addTo(that.map);
             stations.forEach(station =>{
                 let latitude = station['latitude'];
                 let longitude = station['longitude'];
-
-                let info = "<b>Station Name" + ":</b>" + station["siteName"] + "</br>" +
-                    "<b>Air Quality Index</b> "+ station["agiIndex"].toFixed(2);
                 let circlemarker = L.circle([latitude,longitude],{
                     radius: 2000,
                     stroke: true,
                     color: '#ffffff00',
                     fill: true
                     }
-                ).addTo(this.map).bindPopup(info);
+                ).addTo(this.map);
 
                 circlemarker.featureInfo = station;
                 circlemarker.on('click', function(e) {
                     that.showChartView(e.target.featureInfo);
                 });
                 circlemarker.on('mouseover',function(ev) {
-                    // circlemarker.openPopup();
                     let layer = ev.target;
                     that.info.update(layer.featureInfo)
                 });
@@ -169,13 +181,14 @@ $(function(){
         showChartView: function(featureInfo) {
             let that = this;
             let siteId = featureInfo.siteId;
-            that.chartData = {};
             $.ajax({
                 type: "GET",
                 url: '/visualization/getChartData?year=' + that.year + '?siteId=' + siteId,
                 contentType: 'application/json',
                 success: function (response, body) {
                     if (response) {
+
+                        $('#chartTitle').text('Visualization Charts - ' + featureInfo.siteName);
                         that.processChartData(response);
                         that.showParticleConcChart();
                         that.showEPAWindScatsChart();
