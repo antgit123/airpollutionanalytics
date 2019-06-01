@@ -308,6 +308,7 @@ router.get('/getChartData', (req, res, next) => {
                 {monitorId: "O3"},
                 {monitorId:"BPM2.5"},
                 {monitorId: "BPM10"},
+                {monitorId: "SO2"},
                 {monitorId:"SWS"},]}]};
     // let epa_filter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));

@@ -1,14 +1,16 @@
 
 body{
-  /*height: 100%;*/
-  /*width: 100%;*/
   background: url("https://cdn.newsapi.com.au/image/v1/71707d70da0b37f5c7f3187d03d37596?width=650") no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
   background-size: cover;
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  padding: 10px;
+  font: 12px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+#frontcontent {
+  padding:50px;
 }
 
 a {
@@ -41,9 +43,13 @@ a {
 }
 
 #parent-visualization-container{
-  border: 4px solid grey;
-}
+  border: 2px solid grey;
 
+}
+#parent-visualization-container .col-2 {
+  padding-left: 30px;
+  padding-top: 10px;
+}
 .legend {
   line-height: 18px;
   color: #555;
@@ -83,9 +89,9 @@ a {
 
 
 #charts-container{
-  border: 2px solid lightgray;
+  /*border: 2px solid lightgray;*/
   margin-top: 5px;
-  margin-bottom: 5px;
+  margin-bottom: 20px;
 }
 
 #statsSection{
@@ -99,4 +105,12 @@ a {
 .scrollTopButton{
   margin-top: 5px;
   margin-left: 5px;
+}
+
+.form-group label {
+  font-size : 14px;
+}
+
+#moveToTop, #goToHome {
+  margin: 10px;
 }

@@ -3,36 +3,48 @@ $(function(){
         loadVisualization: function(){
             let that = this;
             this.map = this.getMap();
+            that.year = 2018; //Setting the initial year to 2018
+            that.initializeMap();
 
-            $('#submitOptionsForScatsEpa').on('click',()=>{
-                that.year = $("#yearSelectForScatsEpa")[0].value;
-                that.reInitializeCharts();
-                that.removeAllMapLayers(that.map);
-                that.updateTimeOptions(that.map, that.year);
-                that.addEpaLayer(that.year);
-                that.addScatsLayer(that.year);
-                if(!that.legendEpaAdded){
-                    that.addLegendEpa();
-                }
-                that.legendEpaAdded = true;
-                if(!that.legendScatsAdded){
-                    that.addLegendScats();
-                }
-                that.legendScatsAdded = true;
-                $.ajax({
-                    type: "GET",
-                    url: '/visualization/getEPAAirIndexData?year=' + that.year,
-                    contentType: 'application/json',
-                    success: function (response, body) {
-                        if (response) {
-                            that.createStationLayerGroup(response.data);
-                        }
-                    },
-                    error: function () {
-                        that.showModal("Request Error", "Unable to retrieve data");
-                    }
-                });
+            $('#yearSelect').on('change', function(){
+                that.year = $("#yearSelect")[0].value;
+                that.initializeMap();
             });
+
+            $('#goToHome').on('click', () => {
+                window.location.href = '/';
+            });
+        },
+
+        initializeMap: function() {
+            var that = this;
+            this.reInitializeCharts();
+            this.removeAllMapLayers(this.map);
+            this.updateTimeOptions(this.map, this.year);
+            this.addEpaLayer(this.year);
+            this.addScatsLayer(this.year);
+            if(!this.legendEpaAdded){
+                this.addLegendEpa();
+            }
+            this.legendEpaAdded = true;
+            if(!this.legendScatsAdded){
+                this.addLegendScats();
+            }
+            this.legendScatsAdded = true;
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getEPAAirIndexData?year=' + that.year,
+                contentType: 'application/json',
+                success: function (response, body) {
+                    if (response) {
+                        that.createStationLayerGroup(response.data);
+                    }
+                },
+                error: function () {
+                    that.showModal("Request Error", "Unable to retrieve data");
+                }
+            });
+
         },
 
         updateTimeOptions: function(map, year) {
@@ -57,6 +69,10 @@ $(function(){
                 },
                 center: [-37.814, 144.96332],
             });
+            this.info = L.control();
+
+            this.yearSelection = L.control();
+
             L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
                 attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
                 maxZoom: 18,
@@ -66,7 +82,21 @@ $(function(){
 
             this.legendEpaAdded = false;
             this.legendScatsAdded = false;
-            this.info = L.control();
+            this.yearSelection.onAdd = function (map) {
+                this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+                this._div.innerHTML = "<div class = 'form-control'>Select Year  " +
+                    "<select id='yearSelect'>" +
+                        "<option value='2014'>2014</option>" +
+                        "<option value='2015'>2015</option>" +
+                        "<option value='2016'>2016</option>" +
+                        "<option value='2017'>2017</option>" +
+                        "<option selected value='2018'>2018</option>" +
+                    "</select></div>";
+                return this._div;
+            };
+
+
+            this.yearSelection.addTo(map);
             return map;
         },
 
@@ -141,40 +171,43 @@ $(function(){
 
         createStationLayerGroup: function (stations) {
             let that = this;
-            that.info.onAdd = function (map) {
-                this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-                this.update();
-                return this._div;
-            };
+            // that.info.onAdd = function (map) {
+            //     this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+            //     this.update();
+            //     return this._div;
+            // };
 
             // method that we will use to update the control based on feature properties passed
-            that.info.update = function (props) {
-                this._div.innerHTML = '<h4>Name of the Region</h4>' + (props ?
-                    '<b>' + props["siteName"] + '</b><br />'
-                    : 'Hover over a region');
-            };
-            this.info.addTo(that.map);
+            // that.info.update = function (props) {
+            //     this._div.innerHTML = '<h4>Name of the Region</h4>' + (props ?
+            //         '<b>' + props["siteName"] + '</b><br />'
+            //         : 'Hover over a region');
+            // };
+            // this.info.addTo(that.map);
             stations.forEach(station =>{
                 let latitude = station['latitude'];
                 let longitude = station['longitude'];
+
+                let info = "<b>Station Name" + ":</b>" + station["siteName"];
                 let circlemarker = L.circle([latitude,longitude],{
                     radius: 2000,
                     stroke: true,
                     color: '#ffffff00',
                     fill: true
                     }
-                ).addTo(this.map);
+                ).addTo(this.map).bindPopup(info);
 
                 circlemarker.featureInfo = station;
                 circlemarker.on('click', function(e) {
                     that.showChartView(e.target.featureInfo);
                 });
                 circlemarker.on('mouseover',function(ev) {
+                    circlemarker.openPopup();
                     let layer = ev.target;
-                    that.info.update(layer.featureInfo)
+                    // that.info.update(layer.featureInfo)
                 });
                 circlemarker.on('mouseout', function(ev){
-                    that.info.update();
+                    circlemarker.openPopup();
                 });
             });
         },
@@ -208,12 +241,6 @@ $(function(){
           that.timeAxis = [];
           let yrs = ['2014', '2015', '2016', '2017', '2018'];
 
-          that.chartsContainer = document.getElementById('charts-container');
-          that.mapContainer = document.getElementById('parent-visualization-container');
-          that.chartsContainer.scrollIntoView(true);
-          $('#moveToTop').on('click', () => {
-                that.mapContainer.scrollIntoView(true);
-            });
           yrs.forEach(year => {
               let collection = data['ScatsEPA' + year + 'Collection'];
               that[year + 'ScatsData'] = collection.sort(function(a,b){
@@ -246,6 +273,7 @@ $(function(){
             let no2ParticleConcValue = [];
             let bpm25ParticleConcValue = [];
             let pm10ParticleConcValue = [];
+            let so2ParticleConcValue = [];
             let scatsData = that[that.year + 'ScatsData'].map(a => a['sum(count)']);
 
             that.currentYrEPAParticleConcData.forEach(function(valuePerMonitorId) {
@@ -274,6 +302,12 @@ $(function(){
                         o3particleConcValue.push(hourData['avg_conc_value']);
                     });
                 }
+                if(valuePerMonitorId.monitorId == 'SO2') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        so2ParticleConcValue.push(hourData['avg_conc_value']);
+                    });
+                }
+
             });
 
             let epaCOTrace = {
@@ -282,7 +316,7 @@ $(function(){
                 name: 'Carbon monoxide (ppm)',
                 type: 'scatter',
                 marker: {
-                    color: "#daf7a6",
+                    color: "#d6e34d",
                 }
             };
 
@@ -326,6 +360,16 @@ $(function(){
                 }
             };
 
+            let epaso2Trace = {
+                x: that.timeAxis,
+                y: so2ParticleConcValue,
+                name: 'Sulphur Dioxide (ppb)',
+                type: 'scatter',
+                marker: {
+                    color: "#b7488c",
+                }
+            };
+
             let scatsTrace = {
                 x: that.timeAxis,
                 y: scatsData,
@@ -333,11 +377,11 @@ $(function(){
                 yaxis: 'y2',
                 type: 'scatter',
                 marker: {
-                    color: "#82adf6",
+                    color: "#371bf7",
                 }
             };
 
-            let trendData = [epaCOTrace, epano2Trace,epaO3Trace,epabpm25Trace,epabpm10Trace,scatsTrace];
+            let trendData = [epaCOTrace, epano2Trace,epaO3Trace,epabpm25Trace,epabpm10Trace,epaso2Trace,scatsTrace];
             let layout = {
                 title: "EPA Vs SCATS Chart",
                 yaxis: {title: 'Total emission quantity'},
@@ -347,10 +391,11 @@ $(function(){
                     tickfont: {color: 'rgb(148, 103, 189)'},
                     overlaying: 'y',
                     side: 'right'
-                }
+                },
+                width: 1100
             };
-            Plotly.newPlot('particleConcChartView', trendData,layout);
-            $('#charts-container').show();
+            Plotly.newPlot('particleConcChartView', trendData,layout, {responsive: true});
+
         },
 
         showEPAWindScatsChart: function() {
@@ -395,7 +440,7 @@ $(function(){
                 yaxis: 'y2',
                 type: 'scatter',
                 marker: {
-                    color: "#82adf6",
+                    color: "#371bf7",
                 }
             };
 
@@ -406,16 +451,19 @@ $(function(){
                 yaxis2: {
                     title: 'Traffic volume',
                     overlaying: 'y',
+                    anchor: 'x',
                     side: 'right'
                 },
                 yaxis3: {
                     title: 'Wind speed',
+                    anchor: 'free',
                     overlaying: 'y',
                     side: 'right',
-                    position: 1.3
-                }
+                    position: 0.85
+                },
+                width: 1100
             };
-            Plotly.newPlot('AqiWindScatsChartView', trendData,layout);
+            Plotly.newPlot('AqiWindScatsChartView', trendData,layout, {responsive: true});
         },
 
         showScatsTrendsChart: function() {
@@ -426,7 +474,7 @@ $(function(){
                 name: '2014 Scats data',
                 type: 'scatter',
                 marker: {
-                    color: "#daf7a6",
+                    color: "#d6e34d",
                 }
             };
 
@@ -486,7 +534,7 @@ $(function(){
                 name: '2014 AQI data',
                 type: 'scatter',
                 marker: {
-                    color: "#daf7a6",
+                    color: "#d6e34d",
                 }
             };
 
@@ -533,9 +581,17 @@ $(function(){
             let trendData = [epa2014Trace, epa2015Trace, epa2016Trace, epa2017Trace, epa2018Trace];
             let layout = {
                 title: "EPA AQI trend Chart",
-                yaxis: {title: 'Air Quality Index'}
+                yaxis: {title: 'Air Quality Index'},
+                autosize: true
             };
-            Plotly.newPlot('epaAqitrendChartView', trendData,layout);
+            Plotly.newPlot('epaAqitrendChartView', trendData,layout, {responsive: true});
+            $('#charts-container').show();
+            that.chartsContainer = document.getElementById('charts-container');
+            that.mapContainer = document.getElementById('parent-visualization-container');
+            that.chartsContainer.scrollIntoView(true);
+            $('#moveToTop').on('click', () => {
+                that.mapContainer.scrollIntoView(true);
+            });
         },
 
         addLegendEpa: function () {
@@ -583,7 +639,14 @@ $(function(){
                 return div;
             };
             this.legend.addTo(this.map);
-        }
+        },
+
+        showModal: function (title, body) {
+            // Display error message to the user in a modal
+            $('#alert-modal-title').html(title);
+            $('#alert-modal-body').html(body);
+            $('#alert-modal').modal('show');
+        },
     };
 
     if(window.location.pathname === '/visualization' && window.location.search === '?type=scats') {
