@@ -8,6 +8,7 @@ $(function () {
             $('#searchContainer').hide();
             $('#regionContainer').hide();
             $('#charts-container').hide();
+            $('#correlationsContainer').hide();
             this.substanceList = [];
             this.phiduReferenceMap = {
                 "respiratory": ["respiratory_admissions", "Number of Respiratory admissions"],
@@ -377,14 +378,11 @@ $(function () {
                 this.shpFile.on('click', function (layer) {
                     let feature = layer.layer.feature;
                     let code = feature.properties[that.code_key];
-                    let name = feature.properties[that.name_key];
-                    getLayerInfo(code, name, that, year, layer.layer);
                     that.getEmissionData(code, year, layer.layer);
                 });
 
-                function getLayerInfo(code, name, appObject, year, layer) {
+                function getLayerInfo(code, name, appObject, year, layer, popup) {
                     let info = [];
-                    let viz_layer = layer;
                     let total_Quantity = 0, items = 0;
                     let substance = appObject.optionMap.get("substance");
                     info.push("<b>Area Name:</b>" + name);
@@ -420,12 +418,12 @@ $(function () {
                                 });
                                 if (items === substanceResponse['data'].length) {
                                     info.push("<b>Total Emission (in Kg): </b>" + total_Quantity);
-                                    viz_layer.bindPopup(info.join(" <br/>"));
+                                    popup.setContent(info.join(" <br/>")).openOn(that.map);
                                 }
                             } else {
                                 //no data found which means region doesn't have any emission of that substance
                                 info.push("<b>Total Emission (in Kg):</b>" + total_Quantity);
-                                viz_layer.bindPopup(info.join(" <br/>"));
+                                popup.setContent(info.join(" <br/>")).openOn(that.map);
                             }
                         },
                         error: function () {
@@ -447,11 +445,12 @@ $(function () {
                         that.selectedLayer.bringToFront();
                     }
                     that.info.update(that.selectedLayer.feature.properties);
-                    //potential delete
+                    let feature = that.selectedLayer.feature;
+                    let code = feature.properties[that.code_key];
+                    let name = feature.properties[that.name_key];
                     let popup = L.popup()
-                        .setLatLng(e.latlng)
-                        .setContent(that.selectedLayer.feature.properties[that.name_key])
-                        .openOn(that.map);
+                        .setLatLng(e.latlng);
+                    getLayerInfo(code, name, that, year, that.selectedLayer, popup);
                 }
 
                 function resetHighlight(e) {
@@ -619,7 +618,7 @@ $(function () {
                         totalQuantity += business.emissionData['quantity_in_kg'];
                     });
                     that.emissionTrendMap.set(year, totalQuantity);
-                    $('#totalEmissionText')[0].innerText = totalQuantity;
+                    $('#totalEmissionText')[0].innerText = totalQuantity.toFixed(2);
                     $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
                     if (that.optionMap.get("choroplethParameter") === "emission") {
                         $('#statsChoroplethContainer1').hide();
@@ -665,20 +664,24 @@ $(function () {
             let phiduYearKeys = Array.from(that.phiduTrendMap.keys());
             let emissionYearValues = Array.from(that.emissionTrendMap.values());
             let phiduYearValues = Array.from(that.phiduTrendMap.values());
+            let choroplethParameter = that.optionMap.get("choroplethParameter");
             let emissionTrace = {
                 x: emissionYearKeys,
                 y: emissionYearValues,
                 name: 'Emission data',
                 type: 'scatter'
             };
-
-            let phiduTrace = {
-                x: phiduYearKeys,
-                y: phiduYearValues,
-                name: 'Respiratory admissions',
-                yaxis: 'y2',
-                type: 'scatter'
-            };
+            let phiduTrace = {};
+            if(choroplethParameter !== "isch_heart" && choroplethParameter !== "stroke"
+                 && choroplethParameter !== "copd" && choroplethParameter !== "asthma") {
+                phiduTrace = {
+                    x: phiduYearKeys,
+                    y: phiduYearValues,
+                    name: 'Respiratory admissions',
+                    yaxis: 'y2',
+                    type: 'scatter'
+                };
+            }
 
             let trendData = [emissionTrace, phiduTrace];
             let layout = {
@@ -805,6 +808,7 @@ $(function () {
                     let negativeCorrelations = totalRegions - positiveCorrelations;
                     $('#positiveCorrelationText')[0].innerText = Math.round((positiveCorrelations / totalRegions) * 100);
                     $('#negativeCorrelationText')[0].innerText = Math.round((negativeCorrelations / totalRegions) * 100);
+                    $('#correlationsContainer').show();
                     //possible add for correlation check
                     let year = that.optionMap.get("year");
                     // if(year === '2015' || year === '2017')
@@ -840,7 +844,7 @@ $(function () {
                     let emission_value = that[year_key][i]["emission"];
                     let emission_region = that.regionMap.get(that[year_key][i]["code"]);
                     sum += emission_value;
-                    if (emission_value / total_region >= 0.02 && regionalValues.length < 10) {
+                    if (emission_value / total_region >= 0.03 && regionalValues.length < 10) {
                         regionalValues.push(emission_value / total_region);
                         regionalLabels.push(emission_region);
                     }
@@ -881,7 +885,11 @@ $(function () {
             }];
 
             let layout = {
-                title: title
+                title: title,
+                legend:{
+                    x: 1,
+                    y: 1
+                }
             };
             Plotly.newPlot(div, pie_data, layout, {responsive: true});
         }
