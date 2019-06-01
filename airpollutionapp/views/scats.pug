@@ -1,39 +1,23 @@
 extends layout
 
 block content
-    div#parent-visualization-container.container.bg-white
-        //row for the separation of the
-        div.row
-            //for navigation menu
-            div.col-3
-                h3 Select Map Parameters
-                div.form-group
-                    label(for="yearSelectForScatsEpa") Select Year:
-                    select#yearSelectForScatsEpa.form-control.custom-select
-                        option(selected=true value="selectYear") Select Year
-                        option(value="2014") 2014
-                        option(value="2015") 2015
-                        option(value="2016") 2016
-                        option(value="2017") 2017
-                        option(value="2018") 2018
-
-                div.form-group
-                    button#submitOptionsForScatsEpa.btn-info.btn-lg Set Parameters
-            //for visualization area
-            div.col-9
-                div#scatsEpaMapid
+    div#parent-visualization-container.bg-white
+        div#scatsEpaMapid
         div#charts-container.container
-            div.row.d-flex.justify-content-center
+            div.row.justify-content-center
                 h4#chartTitle
-            div#particleConcChartView
-            div#AqiWindScatsChartView
+            div.row
+                div#particleConcChartView
+            div.row
+                div#AqiWindScatsChartView
             div.row
                 div.col-6
                     div#scatsTrendChartView
                 div.col-6
                     div#epaAqitrendChartView
-            div.row.d-flex.justify-content-center
+            ddiv.row.d-flex.justify-content-center
                 button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
+                button#goToHome.btn-primary.btn-med Home page
 
     //for error and validation
     div#alert-modal.modal.fade

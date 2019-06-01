@@ -100,6 +100,10 @@ $(function () {
                         that.appendChoroplethParameter([]);
                 }
             });
+
+            $('#goToHome').on('click', () => {
+                window.location.href = '/';
+            });
         },
 
         raiseParameterError: function (parameters) {
@@ -653,9 +657,7 @@ $(function () {
                 $('#statsChoroplethContainer1').show();
                 $('#statsChoroplethContainer2').hide();
                 let businessLength = that.sortedBusinessList.length;
-                let lowest_code = that.sortedBusinessList[businessLength - 1]["location"];
-                let highest_code = that.sortedBusinessList[0]["location"];
-                // let lowestBusinessRegion = that.map.eachLa
+
                 $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'];
                 $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
             }

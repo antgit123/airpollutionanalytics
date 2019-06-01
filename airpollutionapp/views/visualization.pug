@@ -1,17 +1,16 @@
 extends layout
 
 block content
-    div#parent-visualization-container.container.bg-white
+    div#parent-visualization-container.bg-white
         //row for the separation of the charts and map container
         div.row
             //for navigation menu
-            div.col-3
-                    h3 Select Parameters
+            div.col-2
+                    h5 Select Parameters
                     div#substanceContainer.form-group
                         label(for="substanceSelect") Select Substance:
                         select#substanceSelect.form-control
                             option(value="selectSubstance") Select Substance
-                            //option(value="selectSubstance")
                     div#regionContainer.form-group
                         label(for="regionSelect") Select Chart Region:
                         select#regionSelect.form-control
@@ -38,12 +37,11 @@ block content
                         button#submitOptions.btn-info.btn-lg Set Parameters
 
             //for visualization area
-            div.col-9
+            div.col-10
                 div#mapid
         div#charts-container.container
             div.row.d-flex.justify-content-center
                 h4 Visualization Charts
-                button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
             div.row
                 div.col-4
                     div#regionStatsContainer.container
@@ -107,6 +105,9 @@ block content
                 div#businessPieChart
             div.row.d-flex.justify-content-center
                 div#regionContributionChart
+            div.row.d-flex.justify-content-center
+                button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
+                button#goToHome.btn-primary.btn-med Home page
 
     //for error and validation
     div#alert-modal.modal.fade

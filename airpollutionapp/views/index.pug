@@ -1,20 +1,21 @@
 extends layout
 
 block content
-  div(class="jumbotron")
-    div(class="container-fluid")
-      div(class="row justify-content-center")
-        h3(class="app-header") #{title}
-      div(class="container-fluid vis-form-container")
-        div(class="row vis-form-row")
-          div(class="col")
-              label( class="col-sm-2" for="visualizationType") Select Visualization:
-              select( class="custom-select col-sm-5" id="visualizationType")
-                option(selected=true value="type") Select Type
-                option(value="emission") Emission Data
-                option(value="scats") SCATS Data
-        div(class="row vis-form-row")
-          button(class="btn btn-info btn-lg ml-4" id="visualize-button") Visualize
+  div#frontcontent
+    div(class="jumbotron")
+      div(class="container-fluid")
+        div(class="row justify-content-center")
+          h3(class="app-header") #{title}
+        div(class="container-fluid vis-form-container")
+          div(class="row vis-form-row")
+            div(class="col")
+                label( class="col-sm-2" for="visualizationType") Select Visualization:
+                select( class="custom-select col-sm-5" id="visualizationType")
+                  option(selected=true value="type") Select Type
+                  option(value="emission") Emission Data
+                  option(value="scats") SCATS Data
+          div(class="row vis-form-row")
+            button(class="btn btn-info btn-lg ml-4" id="visualize-button") Visualize
 
   //for error and validation
   div#alert-modal.modal.fade
