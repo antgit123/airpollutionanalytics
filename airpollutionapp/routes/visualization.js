@@ -291,21 +291,18 @@ router.get('/getChartData', (req, res, next) => {
 
     //Getting EPA data for that selected year
     let epaCollectionName = "EPA" + currentYr + "MeasurementsCollection";
-    let epa_filter_criteria = {
-        $and: [{siteId: parseInt(siteId)},
-            {
-                $or: [
-                    {monitorId: "CO"},
-                    {monitorId: "NO2"},
-                    {monitorId: "O3"},
-                    {monitorId: "BPM2.5"},
-                    {monitorId: "BPM10"},
-                    {monitorId: "SO2"},
-                    {monitorId: "iPM2.5"},
-                    {monitorId: "SWS"}]
-            }]
-    };
-    // let epa_filter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
+
+    let epa_filter_criteria = {$and:[{siteId:parseInt(siteId)},
+            {$or:[
+                {monitorId: "CO"},
+                {monitorId:"NO2"},
+                {monitorId: "O3"},
+                {monitorId:"BPM2.5"},
+                {monitorId: "PM10"},
+                {monitorId: "SO2"},
+                {monitorId:"iPM2.5"},
+                {monitorId:"SWS"}]}]};
+    
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
 
     mongoDb.resolveAllPromise(queryPromise, res);
