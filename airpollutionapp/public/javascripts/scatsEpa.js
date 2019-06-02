@@ -195,7 +195,7 @@ $(function(){
                     circlemarker.openPopup();
                 });
                 circlemarker.on('mouseout', function(ev){
-                    circlemarker.openPopup();
+                    circlemarker.closePopup();
                 });
             });
         },
