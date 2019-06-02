@@ -7,7 +7,6 @@ const url = 'mongodb://' + host + ':' + port;
 const dbName = 'AirPollutionDB';
 let dbCollectionList;
 let airpollutionDb;
-let collectionMap = new Map();
 
 let mongoDb = {
     getCollections: function () {
@@ -139,7 +138,7 @@ router.get('/getFilteredEmissionData', function (req, res, next) {
         let phidu_collectionName = "PHIDU" + year + "Collection";
         collectionList.push(phidu_collectionName);
     }
-    let dee_collectionName = "DEE" + year + "Collection";
+    let dee_collectionName = "DEEnew" + year + "Collection";
     collectionList.push(dee_collectionName);
     collectionList.forEach(collection => {
         if (collection.indexOf('DEE') !== -1) {
@@ -201,7 +200,7 @@ router.get('/getChartVisualizationData', (req, res, next) => {
         if (year === '2015' || year === '2017') {
             queryPromise.push(mongoDb.getFilteredDocuments("PHIDU" + year + "Collection",{}));
         }
-        queryPromise.push(mongoDb.performAggregation("DEE" + year + "Collection", dee_agg));
+        queryPromise.push(mongoDb.performAggregation("DEEnew" + year + "Collection", dee_agg));
     });
     mongoDb.resolveAllPromise(queryPromise,res);
 });
@@ -213,7 +212,7 @@ router.get('/getRegionEmissionData', (req, res, next) => {
     let year = queryMap.get("year");
     let area_code = queryMap.get("region");
     let substance = queryMap.get("substance");
-    let dee_collection = "DEE" + year + "Collection";
+    let dee_collection = "DEEnew" + year + "Collection";
     let filter_criteria;
     if (substance) {
         filter_criteria = {$and: [{location: area_code}, {'emissionData.substance': substance}]};
@@ -254,7 +253,7 @@ router.get('/getSummaryCorrelationData', (req, res, next) => {
         }
     ];
     years.forEach(year => {
-        queryPromise.push(mongoDb.performAggregation("DEE" + year + "Collection", dee_agg));
+        queryPromise.push(mongoDb.performAggregation("DEEnew" + year + "Collection", dee_agg));
     });
     mongoDb.resolveAllPromise(queryPromise,res);
 });

@@ -205,7 +205,7 @@ $(function () {
             let phidu_key, dee_key;
             if (response) {
                 year = that.optionMap.get('year');
-                dee_key = "DEE" + year + "Collection";
+                dee_key = "DEEnew" + year + "Collection";
                 if (year === '2015' || year === '2017') {
                     phidu_key = "PHIDU" + year + "Collection";
                 }
@@ -525,12 +525,15 @@ $(function () {
         },
 
         getColor: function (data, min, max) {
-            let range = (max - min) / 5;
+            let range = (max - min) / 8;
             return data > max - range ? '#FE0010' :
                 data > max - (2 * range) ? '#F06D01' :
-                    data > max - (3 * range) ? '#E3DB02' :
-                        data > max - (4 * range) ? '#71D503' :
-                            data > max - (5 * range) ? '#05C804' :
+                    data > max - (3* range) ? '#F1AB0B':
+                    data > max - (4 * range) ? '#E3DB02' :
+                        data> max - (5 * range) ? '#FFFF00':
+                        data > max - (6 * range) ? '#71D503' :
+                            data > max - (7 * range) ? '#05C804' :
+                                data > max - (8 * range) ? '#437414':
                                 '#A9A9A9';
         },
 
@@ -539,9 +542,10 @@ $(function () {
             this.legend = L.control({position: 'bottomright'});
             this.legend.onAdd = function (map) {
                 let div = L.DomUtil.create('div', 'info legend'),
-                    range = (that.max - that.min) / 5;
-                grades = [that.min, that.max - (4 * range), that.max - (3 * range),
-                    that.max - (2 * range), that.max - range, that.max],
+                    range = (that.max - that.min) / 8;
+                grades = [that.min, that.max - (7 * range), that.max - (6 * range),
+                    that.max - (5 * range),that.max - (4 * range),that.max - (3 * range),
+                    that.max - (2 * range),that.max - range, that.max],
                     labels = [];
                 // loop through our density intervals and generate a label with a colored square for each interval
                 for (let i = 0; i < grades.length - 1; i++) {
@@ -615,7 +619,7 @@ $(function () {
                 // let admissions = that.phidu_data[0]["respira"]
             }
             emission_years.forEach(year => {
-                let emissionData = data["DEE" + year + "Collection"];
+                let emissionData = data["DEEnew" + year + "Collection"];
                 if (emissionData.length > 0) {
                     let totalQuantity = 0;
                     emissionData.forEach(business => {
@@ -714,7 +718,7 @@ $(function () {
         showBusinessPieChart: function (data, areaName) {
             let that = this;
             let year = that.optionMap.get("year");
-            let businessList = data["DEE" + year + "Collection"];
+            let businessList = data["DEEnew" + year + "Collection"];
             let emissionSum = 0;
             if (businessList.length > 0) {
                 businessList.forEach(business => {
@@ -750,7 +754,7 @@ $(function () {
                         let phidu_admission = 0;
                         let emissionRegionTotal = [];
                         let phiduTotal = [];
-                        let emissionData = response["DEE" + year + "Collection"];
+                        let emissionData = response["DEEnew" + year + "Collection"];
                         that.regionCodeList.forEach(code => {
                             let totalEmission = 0;
                             let substanceBusinessList = emissionData.filter(emissionNode => {
