@@ -43,8 +43,8 @@ $(function(){
                     $("body").removeClass("loading");
                 },
                 error: function () {
-                    that.showModal("Request Error", "Unable to retrieve data");
                     $("body").removeClass("loading");
+                    that.showModal("Request Error", "Unable to retrieve data");
                 }
             });
 
@@ -221,8 +221,8 @@ $(function(){
                     $("body").removeClass("loading");
                 },
                 error: function () {
-                    that.showModal("Request Error", "Unable to retrieve data");
                     $("body").removeClass("loading");
+                    that.showModal("Request Error", "Unable to retrieve data");
                 }
             });
 

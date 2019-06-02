@@ -46,6 +46,7 @@ $(function () {
 
             $('#submitOptions').on('click', () => {
                 $("body").addClass("loading");
+                $('#showBusinessOption').is(':checked') ? $('#showBusinessOption').prop( "checked", false): null;
                 let substance = $("#substanceSelect")[0].value;
                 let region = $("#regionSelect")[0].value;
                 let year = $("#yearSelect")[0].value;
@@ -72,8 +73,8 @@ $(function () {
                             $("body").removeClass("loading");
                         },
                         error: function () {
-                            that.showModal("Request Error", "Unable to retrieve data");
                             $("body").removeClass("loading");
+                            that.showModal("Request Error", "Unable to retrieve data");
                         }
                     });
                 }
@@ -117,6 +118,7 @@ $(function () {
                     errorExists = true;
                 }
             });
+            $("body").removeClass("loading");
             if (errorExists) {
                 this.showModal("Invalid Parameters", "Please select all parameters before visualization");
                 return errorExists;
@@ -516,8 +518,8 @@ $(function () {
                     $("body").removeClass("loading");
                 },
                 error: function () {
-                    that.showModal("Request Error", "Unable to retrieve data");
                     $("body").removeClass("loading");
+                    that.showModal("Request Error", "Unable to retrieve data");
                 }
             });
         },
@@ -782,7 +784,7 @@ $(function () {
         },
         calculateSummaryCorrelation: function (data) {
             let that = this;
-            let totalRegions = that.regionCodeList.length;
+            // let totalRegions = that.regionCodeList.length;
             let correlationYears = ['2015', '2016', '2017', '2018'];
             let correlationMap = new Map();
             let positiveCorrelations = 0;
@@ -791,12 +793,22 @@ $(function () {
                 url: '/visualization/getSummaryCorrelationData?substance=' + $("#substanceSelect")[0].value,
                 contentType: 'application/json',
                 success: function (response, body) {
+                    let commonLocations = [];
+                    response["DEEnew2015Collection"].forEach(function(summary2015Object) {
+                        response["DEEnew2017Collection"].forEach(function(summary2017Object) {
+                            if(summary2015Object["location"] === summary2017Object["location"] &&
+                                !commonLocations.includes(summary2017Object["location"])) {
+                                commonLocations.push(summary2017Object["location"]);
+                            }
+                        });
+                    });
                     correlationYears.forEach(year => {
                         let phidu_admission = 0;
                         let emissionRegionTotal = [];
                         let phiduTotal = [];
                         let emissionData = response["DEEnew" + year + "Collection"];
-                        that.regionCodeList.forEach(code => {
+
+                        commonLocations.forEach(code => {
                             let totalEmission = 0;
                             let substanceBusinessList = emissionData.filter(emissionNode => {
                                 return emissionNode["location"] === code;
@@ -839,18 +851,21 @@ $(function () {
                     that.phidu2017Summary = correlationMap.get("2017")["phiduSummary"];
                     that.showRegionContributorChart(data);
 
-                    for (let i = 0; i < that.emission2015Summary.length; i++) {
-                        let emission2015Value = that.emission2015Summary[i]["emission"];
-                        let emission2015Code = that.emission2015Summary[i]["code"];
+                    let totalRegions = commonLocations.length;
+                    for (let i = 0; i < totalRegions; i++) {
+                        let emission2015Node = that.emission2015Summary.filter(node => {
+                            return node["code"] === commonLocations[i];
+                        });
                         let emission2017Node = that.emission2017Summary.filter(node => {
-                            return node["code"] === emission2015Code;
+                            return node["code"] === commonLocations[i];
                         });
                         let phidu2015Node = that.phidu2015Summary.filter(node => {
-                            return node["code"] === emission2015Code;
+                            return node["code"] === commonLocations[i];
                         });
                         let phidu2017Node = that.phidu2017Summary.filter(node => {
-                            return node["code"] === emission2015Code;
+                            return node["code"] === commonLocations[i];
                         });
+                        let emission2015Value = emission2015Node[0]["emission"];
                         let emission2017Value = emission2017Node[0]["emission"];
                         let phidu2015Value = phidu2015Node[0]["admissions"];
                         let phidu2017Value = phidu2017Node[0]["admissions"];
