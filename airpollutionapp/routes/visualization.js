@@ -309,7 +309,7 @@ router.get('/getChartData', (req, res, next) => {
                 {monitorId:"NO2"},
                 {monitorId: "O3"},
                 {monitorId:"BPM2.5"},
-                {monitorId: "BPM10"},
+                {monitorId: "PM10"},
                 {monitorId: "SO2"},
                 {monitorId:"iPM2.5"},
                 {monitorId:"SWS"}]}]};

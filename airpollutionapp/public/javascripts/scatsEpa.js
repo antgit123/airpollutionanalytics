@@ -365,7 +365,6 @@ $(function(){
                         ipm25ParticleConcValue.push(hourData['avg_conc_value']);
                     });
                 }
-
             });
 
             let epaCOTrace = {
