@@ -421,12 +421,12 @@ $(function () {
                                     items++;
                                 });
                                 if (items === substanceResponse['data'].length) {
-                                    info.push("<b>Total Emission (in Kg): </b>" + total_Quantity);
+                                    info.push("<b>Total Emission (in Kg): </b>" + total_Quantity.toFixed(2));
                                     popup.setContent(info.join(" <br/>")).openOn(that.map);
                                 }
                             } else {
                                 //no data found which means region doesn't have any emission of that substance
-                                info.push("<b>Total Emission (in Kg):</b>" + total_Quantity);
+                                info.push("<b>Total Emission (in Kg):</b>" + total_Quantity.toFixed(2));
                                 popup.setContent(info.join(" <br/>")).openOn(that.map);
                             }
                         },
