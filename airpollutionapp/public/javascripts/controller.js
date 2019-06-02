@@ -611,6 +611,7 @@ $(function () {
             let emission_count = 0;
             let phidu_count = 0;
             let year = that.optionMap.get('year');
+            $('#regionStats')[0].innerText = "Region Statistics ("+ year +")";
             if (year === '2015' || year === '2017') {
                 // let admissions = that.phidu_data[0]["respira"]
             }
@@ -623,6 +624,7 @@ $(function () {
                     });
                     that.emissionTrendMap.set(year, totalQuantity);
                     $('#totalBusinessText')[0].innerText = that.regionEmissionBusinessList.length;
+                    $('#totalSubstanceBusinessText')[0].innerText = emissionData.length;
                 }
                 emission_count++;
             });
@@ -701,12 +703,8 @@ $(function () {
                     tickfont: {color: 'rgb(148, 103, 189)'},
                     overlaying: 'y',
                     side: 'right'
-                },
-                showlegend: true,
-                legend: {
-                    x: 1,
-                    y: 1
                 }
+
             };
             Plotly.newPlot('trendsChart', trendData, layout);
             that.showBusinessPieChart(data, areaName);
@@ -826,11 +824,10 @@ $(function () {
                     }
                     let negativeCorrelations = totalRegions - positiveCorrelations;
                     $('#positiveCorrelationText')[0].innerText = ((positiveCorrelations/totalRegions) * 100).toFixed(2);
-                    $('#negativeCorrelationText')[0].innerText = ((negativeCorrelations / totalRegions) * 100).toFixed(2);
+                    // $('#negativeCorrelationText')[0].innerText = ((negativeCorrelations / totalRegions) * 100).toFixed(2);
                     $('#correlationsContainer').show();
                     //possible add for correlation check
                     let year = that.optionMap.get("year");
-                    // if(year === '2015' || year === '2017')
                 },
                 error: function (error) {
                     that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
@@ -905,10 +902,7 @@ $(function () {
 
             let layout = {
                 title: title,
-                legend: {
-                    x: 1,
-                    y: 1
-                }
+                width:600
             };
             Plotly.newPlot(div, pie_data, layout, {responsive: true});
         }

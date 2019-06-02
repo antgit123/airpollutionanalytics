@@ -260,7 +260,7 @@ $(function(){
                 name: 'Air Quality Index',
                 type: 'bar',
                 marker: {
-                    color: "#d6e34d",
+                    color: "#c70039",
                 }
             };
 
@@ -270,7 +270,7 @@ $(function(){
                 name: 'Traffic volume',
                 type: 'bar',
                 marker: {
-                    color: "#ffc300",
+                    color: "#371bf7",
                 }
             };
 
@@ -329,6 +329,7 @@ $(function(){
             let bpm25ParticleConcValue = [];
             let pm10ParticleConcValue = [];
             let so2ParticleConcValue = [];
+            let ipm25ParticleConcValue = [];
             let scatsData = that[that.year + 'ScatsData'].map(a => a['sum(count)']);
 
             that.currentYrEPAParticleConcData.forEach(function(valuePerMonitorId) {
@@ -336,30 +337,29 @@ $(function(){
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         coParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                }
-                if(valuePerMonitorId.monitorId == 'NO2') {
+                } else if(valuePerMonitorId.monitorId == 'NO2') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         no2ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                }
-                if(valuePerMonitorId.monitorId == 'BPM2.5') {
+                } else if(valuePerMonitorId.monitorId == 'BPM2.5') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         bpm25ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                }
-                if(valuePerMonitorId.monitorId == 'PM10') {
+                } else if(valuePerMonitorId.monitorId == 'PM10') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         pm10ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                }
-                if(valuePerMonitorId.monitorId == 'O3') {
+                } else if(valuePerMonitorId.monitorId == 'O3') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         o3particleConcValue.push(hourData['avg_conc_value']);
                     });
-                }
-                if(valuePerMonitorId.monitorId == 'SO2') {
+                } else if(valuePerMonitorId.monitorId == 'SO2') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         so2ParticleConcValue.push(hourData['avg_conc_value']);
+                    });
+                } else if(valuePerMonitorId.monitorId == 'iPM2.5') {
+                    valuePerMonitorId['hourlyData'].forEach(hourData => {
+                        ipm25ParticleConcValue.push(hourData['avg_conc_value']);
                     });
                 }
 
@@ -397,7 +397,7 @@ $(function(){
 
             let epabpm25Trace = {
                 x: that.timeAxis,
-                y: bpm25ParticleConcValue,
+                y: bpm25ParticleConcValue.length > 0 ? bpm25ParticleConcValue : ipm25ParticleConcValue,
                 name: 'PM 2.5 particles (µ/m3)',
                 type: 'scatter',
                 marker: {
@@ -428,7 +428,7 @@ $(function(){
             let scatsTrace = {
                 x: that.timeAxis,
                 y: scatsData,
-                name: 'Traffic volume count in that region',
+                name: 'Traffic volume count in region',
                 yaxis: 'y2',
                 type: 'scatter',
                 marker: {
