@@ -658,8 +658,8 @@ $(function () {
                 $('#statsChoroplethContainer2').hide();
                 let businessLength = that.sortedBusinessList.length;
 
-                $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'];
-                $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
+                $('#lowestEmissionText')[0].innerText = that.sortedBusinessList[businessLength - 1].emissionData['quantity_in_kg'].toFixed(2);
+                $('#highestEmissionText')[0].innerText = that.sortedBusinessList[0].emissionData['quantity_in_kg'].toFixed(2);
             }
 
             if (phidu_count === phidu_years.length && emission_count === emission_years.length) {

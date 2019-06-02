@@ -114,3 +114,7 @@ a {
 #moveToTop, #goToHome {
   margin: 10px;
 }
+
+#summaryHeading h6{
+   margin-top: 15px;
+}

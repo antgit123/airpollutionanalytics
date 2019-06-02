@@ -171,19 +171,6 @@ $(function(){
 
         createStationLayerGroup: function (stations) {
             let that = this;
-            // that.info.onAdd = function (map) {
-            //     this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-            //     this.update();
-            //     return this._div;
-            // };
-
-            // method that we will use to update the control based on feature properties passed
-            // that.info.update = function (props) {
-            //     this._div.innerHTML = '<h4>Name of the Region</h4>' + (props ?
-            //         '<b>' + props["siteName"] + '</b><br />'
-            //         : 'Hover over a region');
-            // };
-            // this.info.addTo(that.map);
             stations.forEach(station =>{
                 let latitude = station['latitude'];
                 let longitude = station['longitude'];
@@ -203,8 +190,6 @@ $(function(){
                 });
                 circlemarker.on('mouseover',function(ev) {
                     circlemarker.openPopup();
-                    let layer = ev.target;
-                    // that.info.update(layer.featureInfo)
                 });
                 circlemarker.on('mouseout', function(ev){
                     circlemarker.openPopup();
@@ -214,6 +199,8 @@ $(function(){
         showChartView: function(featureInfo) {
             let that = this;
             let siteId = featureInfo.siteId;
+            let currentTime = new Date(this.map.timeDimension.getCurrentTime()).toISOString();
+
             $.ajax({
                 type: "GET",
                 url: '/visualization/getChartData?year=' + that.year + '?siteId=' + siteId,
@@ -233,6 +220,74 @@ $(function(){
                     that.showModal("Request Error", "Unable to retrieve data");
                 }
             });
+
+            //Ajax call to get the epaAirindex and scats data at that time
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getAQIScatsDataPerTime?year=' + that.year + '?time=' + currentTime,
+                contentType: 'application/json',
+                success: function (response, body) {
+                    if (response) {
+                        that.showEPAScatsBarChart(response);
+                    }
+                },
+                error: function () {
+                    that.showModal("Request Error", "Unable to retrieve data");
+                }
+            });
+        },
+
+        showEPAScatsBarChart: function(data) {
+            let epaAqiCollection = data['EPAAirIndex' + this.year + 'Collection'];
+            let scatsEpaCollection = data['ScatsEPA' + this.year + 'Collection'];
+            let epaAqiIndexArray = [];
+            let scatsAggValueArray = [];
+            let xAxis = [];
+
+            scatsEpaCollection.forEach(function(scatsEpaObject) {
+               epaAqiCollection.forEach(function(epaAqiObject) {
+                   if(scatsEpaObject.Name === epaAqiObject.siteName) {
+                       epaAqiIndexArray.push(epaAqiObject.agiIndex);
+                       scatsAggValueArray.push(scatsEpaObject['sum(count)']);
+                       xAxis.push(epaAqiObject.siteName);
+                   }
+               });
+            });
+
+            let epaAqiIndex = {
+                x: xAxis,
+                y: epaAqiIndexArray,
+                name: 'Air Quality Index',
+                type: 'bar',
+                marker: {
+                    color: "#d6e34d",
+                }
+            };
+
+            let scatsAggValue = {
+                x: xAxis,
+                y: scatsAggValueArray,
+                name: 'Traffic volume',
+                type: 'bar',
+                marker: {
+                    color: "#ffc300",
+                }
+            };
+
+            let epaTrendData = [epaAqiIndex];
+            let scatsTrendData = [scatsAggValue];
+            let layout = {
+                title: "AQI across stations",
+                yaxis: {title: 'Air quality index'},
+                width: 600
+            };
+            let scatslayout = {
+                title: "Aggregated traffic volume across stations",
+                yaxis: {title: 'Aggregated traffic volume'},
+                width: 600
+            };
+            Plotly.newPlot('AqiPerTimeChartView', epaTrendData,layout, {responsive: true});
+            Plotly.newPlot('ScatsPerTimeChartView', scatsTrendData,scatslayout, {responsive: true});
         },
 
         processChartData: function(data) {
@@ -521,7 +576,8 @@ $(function(){
             let trendData = [scats2014Trace, scats2015Trace, scats2016Trace, scats2017Trace, scats2018Trace];
             let layout = {
                 title: "Scats trend Chart",
-                yaxis: {title: 'Traffic volume'}
+                yaxis: {title: 'Traffic volume'},
+                width: 600
             };
             Plotly.newPlot('scatsTrendChartView', trendData,layout);
         },
@@ -582,7 +638,7 @@ $(function(){
             let layout = {
                 title: "EPA AQI trend Chart",
                 yaxis: {title: 'Air Quality Index'},
-                autosize: true
+                width: 600
             };
             Plotly.newPlot('epaAqitrendChartView', trendData,layout, {responsive: true});
             $('#charts-container').show();
