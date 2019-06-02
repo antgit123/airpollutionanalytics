@@ -37,17 +37,6 @@ let mongoDb = {
     getFilteredDocuments: function (collectionName, searchObject) {
         return airpollutionDb.collection(collectionName).find(searchObject);
     },
-    getIndex: function (indexName, collectionName) {
-        airpollutionDb.collection(collectionName).indexes().then(indexes => {
-            console.log("indexes:", indexes);
-            // ...
-        });
-
-        let y = airpollutionDb.collection(collectionName).indexInformation({full: true}).then(indexes => {
-            console.log("indexes:", indexes);
-            // ...
-        });
-    },
     resolveAndReturnResponse: function (response, res) {
         res.send(response);
     },
@@ -64,13 +53,12 @@ let mongoDb = {
     performAggregation: function (collectionName, aggregateArray) {
         return airpollutionDb.collection(collectionName).aggregate(aggregateArray);
     },
-    getSortedDocuments: function(collectionName,searchObject, sortObject){
+    getSortedDocuments: function (collectionName, searchObject, sortObject) {
         return airpollutionDb.collection(collectionName).find(searchObject).sort(sortObject);
     },
-    resolveAllPromise: function(queryPromise,res){
+    resolveAllPromise: function (queryPromise, res) {
         let items = 0;
         let response = {};
-        let that = this;
         Promise.all(queryPromise).then(collectionValues => {
             collectionValues.forEach(collectionValue => {
                 let namespace = collectionValue.ns.split(".")[1];
@@ -198,11 +186,11 @@ router.get('/getChartVisualizationData', (req, res, next) => {
     ];
     years.forEach(year => {
         if (year === '2015' || year === '2017') {
-            queryPromise.push(mongoDb.getFilteredDocuments("PHIDU" + year + "Collection",{}));
+            queryPromise.push(mongoDb.getFilteredDocuments("PHIDU" + year + "Collection", {}));
         }
         queryPromise.push(mongoDb.performAggregation("DEEnew" + year + "Collection", dee_agg));
     });
-    mongoDb.resolveAllPromise(queryPromise,res);
+    mongoDb.resolveAllPromise(queryPromise, res);
 });
 
 router.get('/getRegionEmissionData', (req, res, next) => {
@@ -235,7 +223,7 @@ router.get('/getRegionEmissionData', (req, res, next) => {
 router.get('/getSummaryCorrelationData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
-    let years = ['2015','2016','2017','2018'];
+    let years = ['2015', '2016', '2017', '2018'];
     let queryMap = mongoDb.constructQueryMap(queryParams);
     let substance = queryMap.get("substance");
     let queryPromise = [];
@@ -255,7 +243,7 @@ router.get('/getSummaryCorrelationData', (req, res, next) => {
     years.forEach(year => {
         queryPromise.push(mongoDb.performAggregation("DEEnew" + year + "Collection", dee_agg));
     });
-    mongoDb.resolveAllPromise(queryPromise,res);
+    mongoDb.resolveAllPromise(queryPromise, res);
 });
 
 router.get('/getEPAAirIndexData', (req, res, next) => {
@@ -264,7 +252,7 @@ router.get('/getEPAAirIndexData', (req, res, next) => {
     let queryMap = mongoDb.constructQueryMap(queryParams);
     let year = queryMap.get("year");
     let collectionName = "EPAAirIndex" + year + "Collection";
-    let filter_criteria = {dtg:year+"-01-01T11:00:00"};//Picking only 1 time to just have the emission data
+    let filter_criteria = {dtg: year + "-01-01T11:00:00"};//Picking only 1 time to just have the emission data
     let queryPromise = mongoDb.getFilteredDocuments(collectionName, filter_criteria);
     let response = {};
     queryPromise.toArray(function (err, docs) {
@@ -282,7 +270,7 @@ router.get('/getChartData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
     let queryMap = mongoDb.constructQueryMap(queryParams);
-    let years = ['2014','2015', '2016','2017', '2018'];
+    let years = ['2014', '2015', '2016', '2017', '2018'];
     let currentYr = queryMap.get("year");
     let siteId = queryMap.get("siteId");
     let queryPromise = [];
@@ -303,20 +291,24 @@ router.get('/getChartData', (req, res, next) => {
 
     //Getting EPA data for that selected year
     let epaCollectionName = "EPA" + currentYr + "MeasurementsCollection";
-    let epa_filter_criteria = {$and:[{siteId:parseInt(siteId)},
-            {$or:[
-                {monitorId: "CO"},
-                {monitorId:"NO2"},
-                {monitorId: "O3"},
-                {monitorId:"BPM2.5"},
-                {monitorId: "BPM10"},
-                {monitorId: "SO2"},
-                {monitorId:"iPM2.5"},
-                {monitorId:"SWS"}]}]};
+    let epa_filter_criteria = {
+        $and: [{siteId: parseInt(siteId)},
+            {
+                $or: [
+                    {monitorId: "CO"},
+                    {monitorId: "NO2"},
+                    {monitorId: "O3"},
+                    {monitorId: "BPM2.5"},
+                    {monitorId: "BPM10"},
+                    {monitorId: "SO2"},
+                    {monitorId: "iPM2.5"},
+                    {monitorId: "SWS"}]
+            }]
+    };
     // let epa_filter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
 
-    mongoDb.resolveAllPromise(queryPromise,res);
+    mongoDb.resolveAllPromise(queryPromise, res);
 });
 
 router.get('/getAQIScatsDataPerTime', (req, res, next) => {
@@ -326,15 +318,64 @@ router.get('/getAQIScatsDataPerTime', (req, res, next) => {
     let year = queryMap.get("year");
     let time = queryMap.get("time");
     let epaAirIndexCollection = "EPAAirIndex" + year + "Collection";
-    let scatsEpaCollection = "ScatsEPA"+ year + "Collection";
-    let filter_criteria = {dtg:time.substring(0, time.length-5)};
+    let scatsEpaCollection = "ScatsEPA" + year + "Collection";
+    let filter_criteria = {dtg: time.substring(0, time.length - 5)};
     let scatsfilter_criteria = {DateTime: time};
     let sort_criteria_epa = {siteName: 1};
     let sort_criteria_Scats = {Name: 1};//Picking only 1 time to just have the emission data
     let queryPromise = [];
-    queryPromise.push(mongoDb.getSortedDocuments(epaAirIndexCollection,filter_criteria,sort_criteria_epa));
-    queryPromise.push(mongoDb.getSortedDocuments(scatsEpaCollection,scatsfilter_criteria,sort_criteria_Scats));
+    queryPromise.push(mongoDb.getSortedDocuments(epaAirIndexCollection, filter_criteria, sort_criteria_epa));
+    queryPromise.push(mongoDb.getSortedDocuments(scatsEpaCollection, scatsfilter_criteria, sort_criteria_Scats));
     mongoDb.resolveAllPromise(queryPromise, res);
+});
+
+router.get('/getSelectedSubstanceRegionEmission', (req, res, next) => {
+    let queryParams = req.url.split('?');
+    queryParams.shift();
+    let queryMap = mongoDb.constructQueryMap(queryParams);
+    let region = queryMap.get("region");
+    let substances = ["Particulate Matter 2.5 um", "Particulate Matter 10.0 um","Carbon monoxide","Sulfur dioxide","Oxides of Nitrogen"];
+    let year = queryMap.get("year");
+    let queryPromise = [];
+    let dee_collection = "DEEnew" + year + "Collection";
+    substances.forEach(substance => {
+        let dee_subs_agg = [
+            {$unwind: '$emissionData'},
+            {
+                $match: {
+                    'emissionData.substance': substance,
+                    'location': region
+                }
+            },
+            {
+                $group : {
+                    _id : "$emissionData.substance",
+                    "Total quantity sum" : {$sum : "$emissionData.quantity_in_kg"}
+                }
+            }
+        ];
+        queryPromise.push(mongoDb.performAggregation(dee_collection,dee_subs_agg));
+    });
+    let items = 0;
+    let response = {};
+    response["DEEnew"+year+"Collection"] = [];
+    Promise.all(queryPromise).then(collectionValues => {
+        collectionValues.forEach(collectionValue => {
+            collectionValue.toArray((error, docs) => {
+                if (docs) {
+                    //response[docs["_id"]] = docs;
+                    response["DEEnew"+year+"Collection"].push(docs);
+                } else {
+                    let error = {message: "No documents found"};
+                    res.send(error);
+                }
+                items++;
+                if (items === queryPromise.length) {
+                    res.send(response);
+                }
+            })
+        })
+    });
 });
 
 module.exports = router;

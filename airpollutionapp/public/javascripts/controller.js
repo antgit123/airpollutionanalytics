@@ -45,6 +45,7 @@ $(function () {
             });
 
             $('#submitOptions').on('click', () => {
+                $("body").addClass("loading");
                 let substance = $("#substanceSelect")[0].value;
                 let region = $("#regionSelect")[0].value;
                 let year = $("#yearSelect")[0].value;
@@ -68,9 +69,11 @@ $(function () {
                                 that.map.remove();
                                 that.getMap(response);
                             }
+                            $("body").removeClass("loading");
                         },
                         error: function () {
                             that.showModal("Request Error", "Unable to retrieve data");
+                            $("body").removeClass("loading");
                         }
                     });
                 }
@@ -499,6 +502,7 @@ $(function () {
         },
 
         getEmissionData: function (code, year, layer) {
+            $("body").addClass("loading");
             let that = this;
             $.ajax({
                 type: "GET",
@@ -509,9 +513,11 @@ $(function () {
                         that.regionEmissionBusinessList = clusterResponse['data'];
                         that.createChart(layer, year);
                     }
+                    $("body").removeClass("loading");
                 },
                 error: function () {
                     that.showModal("Request Error", "Unable to retrieve data");
+                    $("body").removeClass("loading");
                 }
             });
         },
@@ -590,6 +596,19 @@ $(function () {
             let areaName = layer.feature.properties[that.name_key];
             $("#selectedRegionText")[0].innerText = areaName;
             $("#selectedSubstanceText")[0].innerText = $("#substanceSelect")[0].value;
+            let year = that.optionMap.get("year");
+
+            $.ajax({
+                type: "GET",
+                url: '/visualization/getSelectedSubstanceRegionEmission?region=' + code + '?year=' + year,
+                contentType: 'application/json',
+                success: function (response, body) {
+                    that.showEmissionBarChart(response["DEEnew"+year+"Collection"], areaName);
+                },
+                error: function (error) {
+                    that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
+                }
+            });
 
             $.ajax({
                 type: "GET",
@@ -604,6 +623,30 @@ $(function () {
             });
         },
 
+        showEmissionBarChart: function(data, areaName){
+            let xArray = data.map(node =>{
+                return node[0]["_id"];
+            });
+            let yArray = data.map(node =>{
+                return node[0]["Total quantity sum"];
+            });
+            let emissionBarChartData = [{
+                x:xArray,
+                y:yArray,
+                name: 'Emission Summary',
+                type: 'bar',
+                marker: {
+                    color: "#ffc300"
+                }}
+
+            ];
+            let layout = {
+                title: "Emission Summary"+"("+areaName+") - Substances",
+                // yaxis: {title: "Emission Summary"+"("+areaName+") - Substances"},
+            };
+
+            Plotly.newPlot('emissionBarChart', emissionBarChartData,layout, {responsive: true});
+        },
         prepareChartData: function (data, areaName) {
             let that = this;
             let phidu_years = ['2015', '2017'];

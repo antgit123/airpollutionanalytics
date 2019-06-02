@@ -110,13 +110,12 @@ block content
                 div.col-7
                     div#trendsChart
             div.row.d-flex.justify-content-center
-                div#businessPieChart
-            div.row.d-flex.justify-content-center
-                div#regionContributionChart
-            //div.row.d-flex.justify-content-center
-            //    div#businessPieChart
-            //div.row.d-flex.justify-content-center
-            //    div#regionContributionChart
+                div#emissionBarChart
+            div.row
+                div.col-6
+                    div#businessPieChart
+                div.col-6
+                    div#regionContributionChart
             div.row.d-flex.justify-content-center
                 button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
                 button#goToHome.btn-primary.btn-med Home page
@@ -132,3 +131,5 @@ block content
                 div#alert-modal-body.modal-body
                 div.modal-footer
                     button.btn.btn-primary(type="button" data-dismiss="modal") Close
+
+    div.modal.loadingIcon
