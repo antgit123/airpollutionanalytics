@@ -302,7 +302,7 @@ router.get('/getChartData', (req, res, next) => {
                 {monitorId: "SO2"},
                 {monitorId:"iPM2.5"},
                 {monitorId:"SWS"}]}]};
-    
+
     queryPromise.push(mongoDb.getFilteredDocuments(epaCollectionName, epa_filter_criteria));
 
     mongoDb.resolveAllPromise(queryPromise, res);

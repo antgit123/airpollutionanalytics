@@ -18,6 +18,7 @@ $(function(){
 
         initializeMap: function() {
             var that = this;
+            $("body").addClass("loading");
             this.reInitializeCharts();
             this.removeAllMapLayers(this.map);
             this.updateTimeOptions(this.map, this.year);
@@ -39,9 +40,11 @@ $(function(){
                     if (response) {
                         that.createStationLayerGroup(response.data);
                     }
+                    $("body").removeClass("loading");
                 },
                 error: function () {
                     that.showModal("Request Error", "Unable to retrieve data");
+                    $("body").removeClass("loading");
                 }
             });
 
@@ -200,7 +203,7 @@ $(function(){
             let that = this;
             let siteId = featureInfo.siteId;
             let currentTime = new Date(this.map.timeDimension.getCurrentTime()).toISOString();
-
+            $("body").addClass("loading");
             $.ajax({
                 type: "GET",
                 url: '/visualization/getChartData?year=' + that.year + '?siteId=' + siteId,
@@ -215,9 +218,11 @@ $(function(){
                         that.showScatsTrendsChart();
                         that.showEPAAqiIndexTrendChart();
                     }
+                    $("body").removeClass("loading");
                 },
                 error: function () {
                     that.showModal("Request Error", "Unable to retrieve data");
+                    $("body").removeClass("loading");
                 }
             });
 
