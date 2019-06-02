@@ -260,7 +260,7 @@ $(function(){
                 name: 'Air Quality Index',
                 type: 'bar',
                 marker: {
-                    color: "#c70039",
+                    color: "#ffc300",
                 }
             };
 
@@ -276,13 +276,16 @@ $(function(){
 
             let epaTrendData = [epaAqiIndex];
             let scatsTrendData = [scatsAggValue];
+            let time = new Date(this.map.timeDimension.getCurrentTime()).getUTCHours();
+            time = time > 9 ? time+':00' : '0'+time+':00';
+
             let layout = {
-                title: "AQI across stations",
-                yaxis: {title: 'Air quality index'},
-                width: 600
+            title: "AQI across stations at " + time,
+            yaxis: {title: 'Air quality index'},
+            width: 600
             };
             let scatslayout = {
-                title: "Aggregated traffic volume across stations",
+                title: "Aggregated traffic volume across stations at " + time,
                 yaxis: {title: 'Aggregated traffic volume'},
                 width: 600
             };
