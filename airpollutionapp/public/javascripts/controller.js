@@ -17,8 +17,9 @@ $(function () {
                 "isch_heart": ["ischaemic_heart_admissions", "Number of Ischaemic Heart admissions"],
                 "stroke": ["stroke_admissions", "Number of stroke admissions"]
             };
-            // if(visualizationOption === 'emission'){
-            this.map = this.getMap(undefined);
+            if(visualizationOption === 'emission') {
+                this.map = this.getMap(undefined);
+            }
             $.ajax({
                 type: "GET",
                 url: '/visualization/getEmissionData',
@@ -28,6 +29,7 @@ $(function () {
                         let substanceName = substance.Name;
                         let substanceId = substance.SubstanceId;
                         let substanceThreshold = substance.SubstanceThreshold;
+                        let substanceFact = substance.FactSheet;
                         if (substanceName === 'Particulate Matter ≤2.5 µm (PM2.5)') {
                             substanceName = 'Particulate Matter 2.5 um';
                         }
@@ -38,7 +40,8 @@ $(function () {
                         that.substanceList.push({
                             name: substanceName,
                             id: substanceId,
-                            threshold: substanceThreshold
+                            threshold: substanceThreshold,
+                            fact: substanceFact
                         });
                     });
                 },
@@ -70,7 +73,6 @@ $(function () {
                                 that.map.remove();
                                 that.getMap(response);
                             }
-                            $("body").removeClass("loading");
                         },
                         error: function () {
                             $("body").removeClass("loading");
@@ -111,7 +113,6 @@ $(function () {
         },
 
         raiseParameterError: function (parameters) {
-            let errorMap = new Map();
             let errorExists = false;
             parameters.forEach(parameter => {
                 if (parameter.indexOf("select") !== -1 || parameter.trim() === "") {
@@ -209,6 +210,7 @@ $(function () {
             let area_code, area_name;
             let phidu_key, dee_key;
             if (response) {
+                $("body").removeClass("loading");
                 year = that.optionMap.get('year');
                 dee_key = "DEEnew" + year + "Collection";
                 if (year === '2015' || year === '2017') {
@@ -304,7 +306,6 @@ $(function () {
                                 }
 
                             } else {
-                                // let year = that.optionMap.get("year");
                                 let no_business = that.sortedBusinessList.length;
                                 if (no_business > 0) {
                                     that.max = that.sortedBusinessList[0].emissionData['quantity_in_kg'];
@@ -321,9 +322,9 @@ $(function () {
                                     that.legendAdded = true;
                                     if (currentBusiness && currentBusiness.length > 0) {
                                         let totalQuantity = 0;
-                                        currentBusiness.forEach(business => {
-                                            totalQuantity += business.emissionData['quantity_in_kg']
-                                        });
+                                        totalQuantity = currentBusiness.reduce((accumulator,business)=>{
+                                            return accumulator += business.emissionData['quantity_in_kg'];
+                                        },0);
                                         currentEmission = totalQuantity;
                                     } else {
                                         if (that.regionCodeList.includes(feature.properties[that.code_key])) {
@@ -515,7 +516,6 @@ $(function () {
                         that.regionEmissionBusinessList = clusterResponse['data'];
                         that.createChart(layer, year);
                     }
-                    $("body").removeClass("loading");
                 },
                 error: function () {
                     $("body").removeClass("loading");
@@ -598,6 +598,10 @@ $(function () {
             let areaName = layer.feature.properties[that.name_key];
             $("#selectedRegionText")[0].innerText = areaName;
             $("#selectedSubstanceText")[0].innerText = $("#substanceSelect")[0].value;
+            let selectedSubstance = that.substanceList.filter(substance =>{
+                return substance["name"] === $("#substanceSelect")[0].value;
+            });
+            $('#infolink').attr('href',selectedSubstance[0]["fact"]);
             let year = that.optionMap.get("year");
 
             $.ajax({
@@ -744,7 +748,7 @@ $(function () {
 
             let trendData = [emissionTrace, phiduTrace];
             let layout = {
-                title: "Region Trends Chart",
+                title: "Region Trends Chart - " +areaName + "("+ $("#substanceSelect")[0].value+ ")",
                 yaxis: {title: 'Total emission quantity'},
                 yaxis2: {
                     title: 'Respiratory Admissions',
@@ -764,9 +768,9 @@ $(function () {
             let businessList = data["DEEnew" + year + "Collection"];
             let emissionSum = 0;
             if (businessList.length > 0) {
-                businessList.forEach(business => {
-                    emissionSum += business.emissionData['quantity_in_kg'];
-                })
+                emissionSum = businessList.reduce((accumulator, business) =>{
+                    return accumulator + business.emissionData['quantity_in_kg'];
+                },0);
             }
             let businessValuesArray = [];
             let businessLabelsArray = [];
@@ -776,13 +780,14 @@ $(function () {
                     businessLabelsArray.push(business['facility_name']);
                 }
             });
+
             if (emissionSum > 0) {
                 let title = areaName + " - Business Emission contribution";
                 that.constructPieChart(businessValuesArray, businessLabelsArray, title, 'businessPieChart');
             }
-            that.calculateSummaryCorrelation(data);
+            that.calculateSummaryCorrelation(areaName);
         },
-        calculateSummaryCorrelation: function (data) {
+        calculateSummaryCorrelation: function (areaName) {
             let that = this;
             // let totalRegions = that.regionCodeList.length;
             let correlationYears = ['2015', '2016', '2017', '2018'];
@@ -814,9 +819,9 @@ $(function () {
                                 return emissionNode["location"] === code;
                             });
                             if (substanceBusinessList.length > 0) {
-                                substanceBusinessList.forEach(substanceBusiness => {
-                                    totalEmission += substanceBusiness.emissionData['quantity_in_kg'];
-                                });
+                                totalEmission = substanceBusinessList.reduce((accumulator, substanceBusiness)=>{
+                                    return accumulator += substanceBusiness.emissionData['quantity_in_kg'];
+                                },0)
                             }
                             emissionRegionTotal.push(
                                 {
@@ -849,7 +854,8 @@ $(function () {
                     });
                     that.phidu2015Summary = correlationMap.get("2015")["phiduSummary"];
                     that.phidu2017Summary = correlationMap.get("2017")["phiduSummary"];
-                    that.showRegionContributorChart(data);
+                    that.showSubstanceContributorChart(areaName);
+                    that.showRegionContributorChart();
 
                     let totalRegions = commonLocations.length;
                     for (let i = 0; i < totalRegions; i++) {
@@ -895,7 +901,44 @@ $(function () {
                     that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
                 }
             });
+        },
+        showSubstanceContributorChart: function(areaName){
+            let that = this;
+            let substanceBusinessMap = new Map();
+            let substanceListMap = new Map();
+            //return emission Data for every business
+            that.regionEmissionBusinessList.map(regionBusiness =>{
+                substanceBusinessMap.set(regionBusiness["jurisdiction_facility_id"],regionBusiness.emissionData);
+            });
+            //loop through business emission Data and find common substances
+            let totalQuantity = 0,
+                 businessEmissionValues = Array.from(substanceBusinessMap.values());
+            businessEmissionValues.forEach(emissionValue =>{
+                emissionValue.forEach(emissionNode =>{
+                    if(substanceListMap.has(emissionNode["substance"])){
+                        let currentQuantity = emissionNode["quantity_in_kg"];
+                        let currentSum = substanceListMap.get(emissionNode["substance"]) + currentQuantity;
+                        substanceListMap.set(emissionNode["substance"],currentSum);
+                    }else{
+                        substanceListMap.set(emissionNode["substance"], emissionNode["quantity_in_kg"]);
+                    }
+                    totalQuantity += emissionNode["quantity_in_kg"];
+                });
+            });
+            let substanceKeys = Array.from(substanceListMap.keys()),
+                substanceChartKeys = [],
+                substanceChartValues = [];
+            substanceKeys.forEach(substance =>{
+                let substanceValue = substanceListMap.get(substance);
+                if(substanceValue / totalQuantity >= 0.02){
+                    substanceChartKeys.push(substance);
+                    substanceChartValues.push(substanceValue);
+                }
+            });
+            let title = "Top substance contributors -"+ areaName;
+            that.constructPieChart(substanceChartValues,substanceChartKeys,title,'substanceContributionChart');
             $('#charts-container').show();
+            $("body").removeClass("loading");
             that.chartsContainer = document.getElementById('charts-container');
             that.mapContainer = document.getElementById('parent-visualization-container');
             that.chartsContainer.scrollIntoView(true);
@@ -903,21 +946,21 @@ $(function () {
                 that.mapContainer.scrollIntoView(true);
             });
         },
-        showRegionContributorChart: function (data) {
+        showRegionContributorChart: function () {
             let that = this;
             let year = that.optionMap.get("year");
+            let substance = that.optionMap.get("substance");
             let choroplethParameter = that.optionMap.get("choroplethParameter");
             if (choroplethParameter === "emission") {
                 //if emission is parameter show top region contributors for the emission for substance
-                let total_region = 0;
                 let regionalValues = [];
                 let regionalLabels = [];
                 let sum = 0;
                 let year_key = "emission" + year + "Summary";
                 that[year_key] = that.sortArray(that[year_key], "emission");
-                that[year_key].forEach(summaryNode => {
-                    total_region += summaryNode["emission"];
-                });
+                total_region = that[year_key].reduce((accumulator,summaryNode)=>{
+                    return accumulator + summaryNode["emission"];
+                },0);
                 for (let i = 0; i < that[year_key].length; i++) {
                     let emission_value = that[year_key][i]["emission"];
                     let emission_region = that.regionMap.get(that[year_key][i]["code"]);
@@ -927,17 +970,17 @@ $(function () {
                         regionalLabels.push(emission_region);
                     }
                 }
-                that.constructPieChart(regionalValues, regionalLabels, "Top Contributors- Regions (Emission)", "regionContributionChart");
+                that.constructPieChart(regionalValues, regionalLabels, "Top Contributors- Regions"+ "("+substance+ ")", "regionContributionChart");
             } else {
-                //if health related parameter is selected, show top contributors for parameter selected
+                //if health related parameter is selected, show top contributors for health parameter selected
                 let key = that.phiduReferenceMap[choroplethParameter][0];
                 let titleValue = that.phiduReferenceMap[choroplethParameter][1];
                 let totalCases = 0;
                 let phiduValuesArray = [];
                 let phiduLabelsArray = [];
-                that.phidu_data.forEach(phiduNode => {
-                    totalCases += phiduNode[key];
-                });
+                totalCases = that.phidu_data.reduce((accumulator,phiduNode)=>{
+                    return accumulator + phiduNode[key];
+                },0);
                 for (let i = 0; i < that.phidu_data.length; i++) {
                     let admissionPercent = (that.phidu_data[i][key] / totalCases) * 100;
                     let area_name = that.phidu_data[i]["lga_name"];
@@ -984,7 +1027,7 @@ $(function () {
     });
 
     if (window.location.pathname === '/visualization') {
-        console.log('ax');
+        that.visualizationOption = window.location.search.split("=")[1];
         appController.loadVisualization(that.visualizationOption);
     }
 });

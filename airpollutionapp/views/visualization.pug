@@ -59,16 +59,17 @@ block content
                                 div.d-inline.statsText
                                     span#selectedSubstanceText
                             div.row
+                                div.d-inline
+                                    h6 Substance information:
+                                div.d-inline.statsText
+                                    span#selectedSubstanceInfo
+                                        a#infolink(href = "", target="_blank") Click here
+                            div.row
                                 div#totalEmissionContainer
                                 div.d-inline
                                     h6 Total Emission (in Kg):
                                 div.d-inline.statsText
                                     span#totalEmissionText
-                                //div#respiratoryCasesContainer
-                                //    div.d-inline
-                                //        h6 Respiratory admissions:
-                                //    div.d-inline.statsText
-                                //        span#totalAdmissionCases
                             div.row
                                 div.d-inline
                                     h6 Businesses in region (substance):
@@ -103,10 +104,6 @@ block content
                                 div.d-inline.statsText
                                     span#positiveCorrelationText
                                 div (Positive correlation between Emission and Respiratory disorder shown over the years for that substance)
-                                //div.d-inline
-                                //    h6 Negative Correlations - Summary (%):
-                                //div.d-inline.statsText
-                                //    span#negativeCorrelationText
 
                 div.col-7
                     div#trendsChart
@@ -116,7 +113,9 @@ block content
                 div.col-6
                     div#businessPieChart
                 div.col-6
-                    div#regionContributionChart
+                    div#substanceContributionChart
+            div.row.d-flex.justify-content-center
+                div#regionContributionChart
             div.row.d-flex.justify-content-center
                 button#moveToTop.btn-primary.btn-med.scrollTopButton View Map
                 button#goToHome.btn-primary.btn-med Home page
