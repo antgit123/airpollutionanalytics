@@ -515,6 +515,8 @@ $(function () {
                     if (clusterResponse && clusterResponse['data'].length > 0) {
                         that.regionEmissionBusinessList = clusterResponse['data'];
                         that.createChart(layer, year);
+                    }else{
+                        $("body").removeClass("loading");
                     }
                 },
                 error: function () {
@@ -647,7 +649,7 @@ $(function () {
 
             ];
             let layout = {
-                title: "Emission Summary"+"("+areaName+") - Substances",
+                title: areaName+ "- Major outdoor pollutants summary",
                 // yaxis: {title: "Emission Summary"+"("+areaName+") - Substances"},
             };
 
@@ -665,9 +667,6 @@ $(function () {
             let phidu_count = 0;
             let year = that.optionMap.get('year');
             $('#regionStats')[0].innerText = "Region Statistics ("+ year +")";
-            if (year === '2015' || year === '2017') {
-                // let admissions = that.phidu_data[0]["respira"]
-            }
             emission_years.forEach(year => {
                 let emissionData = data["DEEnew" + year + "Collection"];
                 if (emissionData.length > 0) {
@@ -690,7 +689,12 @@ $(function () {
                 that.phiduTrendMap.set(year, phidu_region[0]["respiratory_admissions"]);
                 phidu_count++;
             });
-            $('#totalEmissionText')[0].innerText = that.emissionTrendMap.get(year).toFixed(2);
+            if(that.emissionTrendMap.get(year)) {
+                $('#totalEmissionText')[0].innerText = that.emissionTrendMap.get(year).toFixed(2);
+            }else{
+                $('#totalEmissionText')[0].innerText = 0;
+
+            }
             let choroplethParameter = that.optionMap.get("choroplethParameter");
             if (choroplethParameter === "emission") {
                 $('#statsChoroplethContainer1').hide();
@@ -771,23 +775,24 @@ $(function () {
                 emissionSum = businessList.reduce((accumulator, business) =>{
                     return accumulator + business.emissionData['quantity_in_kg'];
                 },0);
-            }
-            let businessValuesArray = [];
-            let businessLabelsArray = [];
-            businessList.forEach(business => {
-                if (business.emissionData['quantity_in_kg'] / emissionSum >= 0.02) {
-                    businessValuesArray.push(business.emissionData['quantity_in_kg'] / emissionSum);
-                    businessLabelsArray.push(business['facility_name']);
-                }
-            });
 
-            if (emissionSum > 0) {
-                let title = areaName + " - Business Emission contribution";
+                let businessValuesArray = [];
+                let businessLabelsArray = [];
+                businessList.forEach(business => {
+                    if (business.emissionData['quantity_in_kg'] / emissionSum >= 0.02) {
+                        businessValuesArray.push(business.emissionData['quantity_in_kg'] / emissionSum);
+                        businessLabelsArray.push(business['facility_name']);
+                    }
+                });
+                let title = areaName + " - Top contributing businesses";
+                $('#businessPieChart').show();
                 that.constructPieChart(businessValuesArray, businessLabelsArray, title, 'businessPieChart');
+            }else{
+                $('#businessPieChart').hide();
             }
-            that.calculateSummaryCorrelation(areaName);
+            that.calculateSummaryCorrelation();
         },
-        calculateSummaryCorrelation: function (areaName) {
+        calculateSummaryCorrelation: function () {
             let that = this;
             // let totalRegions = that.regionCodeList.length;
             let correlationYears = ['2015', '2016', '2017', '2018'];
@@ -854,7 +859,6 @@ $(function () {
                     });
                     that.phidu2015Summary = correlationMap.get("2015")["phiduSummary"];
                     that.phidu2017Summary = correlationMap.get("2017")["phiduSummary"];
-                    that.showSubstanceContributorChart(areaName);
                     that.showRegionContributorChart();
 
                     let totalRegions = commonLocations.length;
@@ -894,56 +898,10 @@ $(function () {
                     $('#positiveCorrelationText')[0].innerText = ((positiveCorrelations/totalRegions) * 100).toFixed(2);
                     // $('#negativeCorrelationText')[0].innerText = ((negativeCorrelations / totalRegions) * 100).toFixed(2);
                     $('#correlationsContainer').show();
-                    //possible add for correlation check
-                    let year = that.optionMap.get("year");
                 },
                 error: function (error) {
                     that.showModal("Document failure", "Failure in fetching the documents. Please check connectivity");
                 }
-            });
-        },
-        showSubstanceContributorChart: function(areaName){
-            let that = this;
-            let substanceBusinessMap = new Map();
-            let substanceListMap = new Map();
-            //return emission Data for every business
-            that.regionEmissionBusinessList.map(regionBusiness =>{
-                substanceBusinessMap.set(regionBusiness["jurisdiction_facility_id"],regionBusiness.emissionData);
-            });
-            //loop through business emission Data and find common substances
-            let totalQuantity = 0,
-                 businessEmissionValues = Array.from(substanceBusinessMap.values());
-            businessEmissionValues.forEach(emissionValue =>{
-                emissionValue.forEach(emissionNode =>{
-                    if(substanceListMap.has(emissionNode["substance"])){
-                        let currentQuantity = emissionNode["quantity_in_kg"];
-                        let currentSum = substanceListMap.get(emissionNode["substance"]) + currentQuantity;
-                        substanceListMap.set(emissionNode["substance"],currentSum);
-                    }else{
-                        substanceListMap.set(emissionNode["substance"], emissionNode["quantity_in_kg"]);
-                    }
-                    totalQuantity += emissionNode["quantity_in_kg"];
-                });
-            });
-            let substanceKeys = Array.from(substanceListMap.keys()),
-                substanceChartKeys = [],
-                substanceChartValues = [];
-            substanceKeys.forEach(substance =>{
-                let substanceValue = substanceListMap.get(substance);
-                if(substanceValue / totalQuantity >= 0.02){
-                    substanceChartKeys.push(substance);
-                    substanceChartValues.push(substanceValue);
-                }
-            });
-            let title = "Top substance contributors -"+ areaName;
-            that.constructPieChart(substanceChartValues,substanceChartKeys,title,'substanceContributionChart');
-            $('#charts-container').show();
-            $("body").removeClass("loading");
-            that.chartsContainer = document.getElementById('charts-container');
-            that.mapContainer = document.getElementById('parent-visualization-container');
-            that.chartsContainer.scrollIntoView(true);
-            $('#moveToTop').on('click', () => {
-                that.mapContainer.scrollIntoView(true);
             });
         },
         showRegionContributorChart: function () {
@@ -970,12 +928,12 @@ $(function () {
                         regionalLabels.push(emission_region);
                     }
                 }
-                that.constructPieChart(regionalValues, regionalLabels, "Top Contributors- Regions"+ "("+substance+ ")", "regionContributionChart");
+                that.constructPieChart(regionalValues, regionalLabels, substance + " - Top Contributing Regions", "regionContributionChart");
             } else {
                 //if health related parameter is selected, show top contributors for health parameter selected
                 let key = that.phiduReferenceMap[choroplethParameter][0];
                 let titleValue = that.phiduReferenceMap[choroplethParameter][1];
-                let totalCases = 0;
+                let totalCases;
                 let phiduValuesArray = [];
                 let phiduLabelsArray = [];
                 totalCases = that.phidu_data.reduce((accumulator,phiduNode)=>{
@@ -992,6 +950,14 @@ $(function () {
                 let title = "Top contributors - Regions" + "(" + titleValue + ")";
                 that.constructPieChart(phiduValuesArray, phiduLabelsArray, title, "regionContributionChart");
             }
+            $('#charts-container').show();
+            $("body").removeClass("loading");
+            that.chartsContainer = document.getElementById('charts-container');
+            that.mapContainer = document.getElementById('parent-visualization-container');
+            that.chartsContainer.scrollIntoView(true);
+            $('#moveToTop').on('click', () => {
+                that.mapContainer.scrollIntoView(true);
+            });
         },
         sortArray: function (array, value) {
             return array.sort(function (obj1, obj2) {
