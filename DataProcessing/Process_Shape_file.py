@@ -1,7 +1,8 @@
 import fiona
 from shapely import geometry
+from shapely.geometry import shape
 
-# function to get information of region
+# function to find the region where the business is located by processing the shape file
 def get_LGA(point, location,year):
     for loc in location:
         properties = location[loc]['properties']
@@ -13,7 +14,7 @@ def get_LGA(point, location,year):
                 return properties['lga_code16']
     return None
 
-# function to get boundary box for the regions
+# function to get the LGA region information and the boundary box for each of the regions
 def get_LGA_dict(shapefile, year):
     location = {}
     with fiona.open(shapefile) as collection:

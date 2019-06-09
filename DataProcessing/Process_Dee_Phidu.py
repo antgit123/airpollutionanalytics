@@ -2,19 +2,20 @@ import json
 import Process_Shape_file as lga
 from xml.dom import minidom
 
-shapefile_LGA201415 = "C:/unimelb_study/Semester4/Project/Output_PHIDU_LGA201415/shp/9dfd51c9-f120-4457-96cc-6b88a0b40764.shp"
-shapefile_LGA201617 = "C:/unimelb_study/Semester4/Project/Output_PHIDU_LGA201617/shp/0e946408-2083-4d5f-b047-7d6457f04978.shp"
+shapefile_LGA201415 = "/mnt/DEE/Output_PHIDU_LGA201415/shp/9dfd51c9-f120-4457-96cc-6b88a0b40764.shp"
+shapefile_LGA201617 = "/mnt/DEE/Output_PHIDU_LGA201617/shp/0e946408-2083-4d5f-b047-7d6457f04978.shp"
 #all npi data file paths
-npi_file201415 = "C:/unimelb_study/Semester4/Project/DataSources/DEE/2014-15/npidata2014-15.xml"
-npi_file201516 = "C:/unimelb_study/Semester4/Project/DataSources/DEE/2015-16/npidata2015-16.xml"
-npi_file201617 = "C:/unimelb_study/Semester4/Project/DataSources/DEE/2016-17/npidata2016-17.xml"
-npi_file201718 = "C:/unimelb_study/Semester4/Project/DataSources/DEE/2017-18/npidata2017-18.xml"
-output_path = "C:/unimelb_study/Semester4/Project/DataSources/DEE/output/"
+npi_file201415 = "/mnt/DEE/reports/2014-15/npidata2014-15.xml"
+npi_file201516 = "/mnt/DEE/reports/2015-16/npidata2015-16.xml"
+npi_file201617 = "/mnt/DEE/reports/2016-17/npidata2016-17.xml"
+npi_file201718 = "/mnt/DEE/reports/2017-18/npidata2017-18.xml"
+output_path = "/mnt/DEE/reports/output/"
 
 fileList = [npi_file201415,npi_file201516,npi_file201617,npi_file201718]
 
-phidu_201415_filepath = "C:/unimelb_study/Semester4/Project/DataSources/PHIDU/PHIDU_2014-2015/data.json"
-phidu_201617_filepath = "C:/unimelb_study/Semester4/Project/DataSources/PHIDU/PHIDU_2016-2017/data.json"
+#all phidu file paths
+phidu_201415_filepath = "/mnt/PHIDU/PHIDU_2014-2015/data.json"
+phidu_201617_filepath = "/mnt/PHIDU/PHIDU_2016-2017/data.json"
 
 phidu_fileList = [phidu_201415_filepath, phidu_201617_filepath]
 
@@ -26,7 +27,7 @@ yhigh = -33.9806
 location_201415 = lga.get_LGA_dict(shapefile_LGA201415,'201415')
 location_201617 = lga.get_LGA_dict(shapefile_LGA201617,'201617')
 
-#process PHIDU files
+#function to process PHIDU json data obtained from AURIN
 def processPhidu(phidu_file):
     phidu_processed = []
     phidu_dict = {}
@@ -78,7 +79,7 @@ def processPhidu(phidu_file):
         with open(output_path + 'PHIDU_'+str(year)+'.json', 'w') as f:
             json.dump(phidu_dict, f)
 
-#function to parse each year file and write summary result in json file
+#function to parse each year NPI report data and store the result as JSON documents
 def parseNpiData(filePath):
     xmldoc = minidom.parse(filePath)
     reports = xmldoc.getElementsByTagName('report')
