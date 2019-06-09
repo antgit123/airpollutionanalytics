@@ -1,5 +1,6 @@
-import getDistance
+from DataProcessing import GetDistance
 
+# function to get SCATS points which are within 2 kms of EPA station
 def filterScatsDataWithinEPA(sc, sqlContext, trafficLightDataPath, EPAStationDataPath):
 
     datastore = sqlContext.read.json(EPAStationDataPath)
@@ -17,30 +18,17 @@ def filterScatsDataWithinEPA(sc, sqlContext, trafficLightDataPath, EPAStationDat
             if not any(x["SITE_NO"] in row for row in finalList):
                 finalList.append(tempList)
 
-    distanceDataList = []
     distanceDictionary = {}
     otherList = {}
-    # for data in datastore.rdd.collect():
-    #     for trafficData in finalList:
-    #         try:
-    #             dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']), float(trafficData[2]), float(trafficData[3]))
-    #             if dist <= 2.0:
-    #                 otherList = (trafficData[0], trafficData[1], trafficData[4], data['SiteId'], data['Name'])
-    #                 if not any(otherList[0] in row for row in distanceDataList):
-    #                     distanceDataList.append(otherList)
-    #                     distanceDictionary
-    #                 else:
-    #                     for row in distanceDataList:
-    #
-    #         except ValueError:
-    #             continue
 
     for trafficData in finalList:
         for data in datastore.rdd.collect():
             try:
-                dist = getDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']),
+                # check the distance between coordinates of EPA station and SCATS site
+                dist = GetDistance.calculateDistance(float(data['Latitude']), float(data['Longitude']),
                                                      float(trafficData[2]), float(trafficData[3]))
                 if dist <= 2.0:
+                    # add the site if distance is less than 2 and not already added
                     if trafficData[0] not in distanceDictionary.keys():
                         distanceDictionary[trafficData[0]] = dist
                         otherList[trafficData[0]] = (trafficData[0], trafficData[1], trafficData[4], data['SiteId'], data['Name'])

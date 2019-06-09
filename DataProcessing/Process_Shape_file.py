@@ -1,25 +1,20 @@
 import fiona
 from shapely import geometry
 
+# function to get information of region
 def get_LGA(point, location,year):
-
     for loc in location:
-        bounds = location[loc]['bounds']
         properties = location[loc]['properties']
-        xmin = bounds[1]
-        xmax = bounds[3]
-        if point.x > xmin and point.x < xmax:
-            ymin = bounds[0]
-            ymax = bounds[2]
-            if point.y > ymin and point.y < ymax:
-                if year == '2015':
-                    return properties['lga_code']
-                else:
-                    return properties['lga_code16']
+        shape_polygon = shape(location[loc]['geometry'])
+        if point.within(shape_polygon):
+            if year == '2015' or year == '2016':
+                return properties['lga_code']
+            else:
+                return properties['lga_code16']
     return None
 
+# function to get boundary box for the regions
 def get_LGA_dict(shapefile, year):
-
     location = {}
     with fiona.open(shapefile) as collection:
         for shapefile_record in collection:

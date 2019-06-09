@@ -3,6 +3,7 @@ from pyspark import SQLContext
 from pyspark import SparkConf
 import sys
 
+# function to get the the total traffic count for a EPA site per hour to display in charts
 def main():
     conf = SparkConf().setAppName("scatsProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 
@@ -20,6 +21,8 @@ def main():
     EpaDf = sqlContext.read.json(EPAStationDataPath)
     scatsDf = scatsDf.withColumn('count', scatsDf['AvgCount'].cast('float')).checkpoint(eager=True)
     EpaDf = EpaDf.select('SiteId','Name', 'Latitude', 'Longitude')
+
+    # grouping by EPA site to get total count of traffic per hour
     scatsDf = scatsDf.groupBy('DateTime', 'EPA_SITE_ID').sum('count').checkpoint(eager=True)
 
     scatsDf = scatsDf.join(EpaDf, scatsDf.EPA_SITE_ID == EpaDf.SiteId, 'inner').checkpoint(eager=True)

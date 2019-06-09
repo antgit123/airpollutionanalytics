@@ -1,5 +1,6 @@
 from pyspark.sql.functions import when
 
+# function to aggregate the traffic volume count per hour for an year
 def calcNoOfTrafficPerHr(sqlContext, df,trafficSite):
     sqlContext.clearCache()
     # Replace negative and blank values with 0

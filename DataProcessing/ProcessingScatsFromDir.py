@@ -2,6 +2,7 @@ import ProcessScatFile
 import subprocess
 import pyspark.sql.functions as func
 
+# function to aggregate the traffic volume count
 def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath, year):
     argsls = "hdfs dfs -ls -C " + volume_data_filepath
     proc = subprocess.Popen(argsls, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -23,6 +24,8 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath,
             joinedDf = joinedDf.union(processedDf)
 
         processedDf = 0
+
+        # adding the traffic count of all detectors per site
         joinedDf = joinedDf.groupBy("NB_SCATS_SITE").sum('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
                                                          '13', '14', '15',
                                                          '16', '17',
@@ -53,11 +56,11 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath,
                         func.posexplode(vf.arrayOfColumns).alias('Range', 'AvgCount'))
     finalDf = finalDf.checkpoint(eager=True)
 
+    # adding date time
+    # date will be same for all values in one year with 24 hours values
     todaydate = year+'/01/01 '
-    try:
-        finalDf = finalDf.withColumn('DateTime',
-                                     func.to_timestamp(func.concat(func.lit(todaydate), finalDf['Range']), "yyyy/MM/dd HH"))
-    except AttributeError:
-        print()
+    finalDf = finalDf.withColumn('DateTime',
+                                func.unix_timestamp(func.concat(func.lit(todaydate), finalDf['Range']), "yyyy/MM/dd HH").cast("timestamp"))
+
     scatsDf = finalDf.checkpoint(eager=True)
     return scatsDf
