@@ -1,5 +1,15 @@
+/* Client side - SCATS EPA Data
+The purpose of this file is to specify the client side utility functions for visualizing
+SCATS and EPA data
+ */
+
 $(function(){
     let scatsEpaController ={
+        /**
+         * The starter function which gets called to render the scats EPA HTML page with map and dropdowns
+         *
+         * @method
+         */
         loadVisualization: function(){
             let that = this;
             this.map = this.getMap();
@@ -16,6 +26,12 @@ $(function(){
             });
         },
 
+        /**
+         * The following function initializes the leaflet map with the EPA stations and
+         * filtered SCATS traffic points for selected year
+         *
+         * @method
+         */
         initializeMap: function() {
             var that = this;
             $("body").addClass("loading");
@@ -47,9 +63,15 @@ $(function(){
                     that.showModal("Request Error", "Unable to retrieve data");
                 }
             });
-
         },
 
+        /**
+         * The following function initializes and displays the time slider options on the map
+         *
+         * @method
+         * @param {map} map - the leaflet map on which timeslider is to be displayed
+         * @param {year} year - the year selected for which the time slider options should be displayed
+         */
         updateTimeOptions: function(map, year) {
             var testoptions = {
                 timeInterval: year+'-01-01T00:00:00.0Z/' + year + '-01-01T23:59:59.999Z',
@@ -59,6 +81,11 @@ $(function(){
             map.timeDimension.initialize(testoptions)
         },
 
+        /**
+         * The following function displays the leaflet map
+         *
+         * @method
+         */
         getMap: function () {
             var map = L.map('scatsEpaMapid', {
                 zoom: 12,
@@ -98,11 +125,15 @@ $(function(){
                 return this._div;
             };
 
-
             this.yearSelection.addTo(map);
             return map;
         },
 
+        /**
+         * The following function destroys the current visualization charts and recreates them
+         *
+         * @method
+         */
         reInitializeCharts: function() {
             let that = this;
             if(this.chartsContainer){
@@ -116,15 +147,26 @@ $(function(){
                 that[year + 'ScatsData'] = [];
                 that[year + 'EpaAqiIndexData'] = [];
             });
-
         },
 
+        /**
+         * The following function removes a layergroup from the leaflet map
+         *
+         * @method
+         * @param {layerGroup} layerGroup - leaflet layerGroup to be removed from the map
+         */
         removeMapLayer: function (layerGroup) {
             if (layerGroup !== undefined) {
                 this.map.removeLayer(layerGroup);
             }
         },
 
+        /**
+         * The following function removes all layers from the leaflet map
+         *
+         * @method
+         * @param {map} map - leaflet map passed which contains the embedded layers to be removed
+         */
         removeAllMapLayers: function(map){
             map.eachLayer(layer=>{
                 if(layer.options.id !== 'mapbox.streets') {
@@ -133,12 +175,24 @@ $(function(){
             });
         },
 
+        /**
+         * The following function adds a layer to the leaflet map
+         *
+         * @method
+         * @param {layer} layer - leaflet layer passed which needs to be added to the map
+         */
         addLayerToMap: function (layer) {
             layer.addTo(this.map);
         },
 
+        /**
+         * The following function adds the WMS EPA timeslider layer to the leaflet map
+         * retrieved from Geoserver
+         *
+         * @method
+         * @param {year} year - the year for which EPA timeslider is required
+         */
         addEpaLayer: function(year) {
-
             let proxy = 'server/proxy.php';
             let WMSUrl = "http://45.113.234.120:8080/geoserver/airpollution/wms/";
             let wmsEPALayer  = L.tileLayer.wms(WMSUrl, {
@@ -148,14 +202,20 @@ $(function(){
                 transparent: true
             });
 
-            var wmsTimeLayer = L.timeDimension.layer.wms(wmsEPALayer, {
+            let wmsTimeLayer = L.timeDimension.layer.wms(wmsEPALayer, {
                 proxy: proxy
             });
             this.addLayerToMap(wmsTimeLayer);
         },
 
+        /**
+         * The following function adds the WMS SCATS traffic points layer to the leaflet map
+         * retrieved from Geoserver
+         *
+         * @method
+         * @param {year} year - the year for which SCATS traffic points layer is required
+         */
         addScatsLayer: function(year) {
-
             let proxy = 'server/proxy.php';
             let WMSUrl = "http://45.113.234.120:8080/geoserver/airpollution/wms/";
 
@@ -172,6 +232,12 @@ $(function(){
             this.addLayerToMap(wmsScatsTimeLayer);
         },
 
+        /**
+         * The following function adds the station layer points for the list of EPA stations
+         *
+         * @method
+         * @param {stations} stations - array of EPA stations
+         */
         createStationLayerGroup: function (stations) {
             let that = this;
             stations.forEach(station =>{
@@ -199,6 +265,13 @@ $(function(){
                 });
             });
         },
+
+        /**
+         * The following function displays the visualization chart container
+         *
+         * @method
+         * @param {featureInfo} featureInfo - information of EPA station
+         */
         showChartView: function(featureInfo) {
             let that = this;
             let siteId = featureInfo.siteId;
@@ -242,6 +315,12 @@ $(function(){
             });
         },
 
+        /**
+         * The following function adds EPA station and Scats traffic data bar chart at a particular time
+         *
+         * @method
+         * @param {data} data - Details of EPA stations and Scats traffic value at a time
+         */
         showEPAScatsBarChart: function(data) {
             let epaAqiCollection = data['EPAAirIndex' + this.year + 'Collection'];
             let scatsEpaCollection = data['ScatsEPA' + this.year + 'Collection'];
@@ -298,6 +377,12 @@ $(function(){
             Plotly.newPlot('ScatsPerTimeChartView', scatsTrendData,scatslayout, {responsive: true});
         },
 
+        /**
+         * The following function processes the data required for chart view
+         *
+         * @method
+         * @param {data} data - Object containing all the details for a particular EPA station
+         */
         processChartData: function(data) {
           let that = this;
           that.currentYrEPAParticleConcData = [];
@@ -329,6 +414,11 @@ $(function(){
               '21:00', '22:00', '23:00', '24:00']
         },
 
+        /**
+         * The following function displays the concentration of particles for an EPA station region
+         *
+         * @method
+         */
         showParticleConcChart: function(){
             let that = this;
             let o3particleConcValue = [];
@@ -341,31 +431,31 @@ $(function(){
             let scatsData = that[that.year + 'ScatsData'].map(a => a['sum(count)']);
 
             that.currentYrEPAParticleConcData.forEach(function(valuePerMonitorId) {
-                if(valuePerMonitorId.monitorId == 'CO') {
+                if(valuePerMonitorId.monitorId === 'CO') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         coParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                } else if(valuePerMonitorId.monitorId == 'NO2') {
+                } else if(valuePerMonitorId.monitorId === 'NO2') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         no2ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                } else if(valuePerMonitorId.monitorId == 'BPM2.5') {
+                } else if(valuePerMonitorId.monitorId === 'BPM2.5') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         bpm25ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                } else if(valuePerMonitorId.monitorId == 'PM10') {
+                } else if(valuePerMonitorId.monitorId === 'PM10') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         pm10ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                } else if(valuePerMonitorId.monitorId == 'O3') {
+                } else if(valuePerMonitorId.monitorId === 'O3') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         o3particleConcValue.push(hourData['avg_conc_value']);
                     });
-                } else if(valuePerMonitorId.monitorId == 'SO2') {
+                } else if(valuePerMonitorId.monitorId === 'SO2') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         so2ParticleConcValue.push(hourData['avg_conc_value']);
                     });
-                } else if(valuePerMonitorId.monitorId == 'iPM2.5') {
+                } else if(valuePerMonitorId.monitorId ==='iPM2.5') {
                     valuePerMonitorId['hourlyData'].forEach(hourData => {
                         ipm25ParticleConcValue.push(hourData['avg_conc_value']);
                     });
@@ -460,6 +550,11 @@ $(function(){
 
         },
 
+        /**
+         * The following function displays the EPA station vs wind data vs SCATS traffic data information chart
+         *
+         * @method
+         */
         showEPAWindScatsChart: function() {
             let that = this;
             let windValue = [];
@@ -528,6 +623,11 @@ $(function(){
             Plotly.newPlot('AqiWindScatsChartView', trendData,layout, {responsive: true});
         },
 
+        /**
+         * The following function displays the trends of the traffic data from 2014-2018
+         *
+         * @method
+         */
         showScatsTrendsChart: function() {
             let that = this;
             let scats2014Trace = {
@@ -589,6 +689,11 @@ $(function(){
             Plotly.newPlot('scatsTrendChartView', trendData,layout);
         },
 
+        /**
+         * The following function displays the trends of the EPA station air quality index from 2014-2018
+         *
+         * @method
+         */
         showEPAAqiIndexTrendChart: function() {
             let that = this;
             let epa2014Trace = {
@@ -657,6 +762,11 @@ $(function(){
             });
         },
 
+        /**
+         * The following function adds the legend for the EPA data
+         *
+         * @method
+         */
         addLegendEpa: function () {
             let that = this;
             this.legend = L.control({position: 'bottomright'});
@@ -680,7 +790,11 @@ $(function(){
             this.legend.addTo(this.map);
         },
 
-
+        /**
+         * The following function adds the legend for the SCATS traffic data
+         *
+         * @method
+         */
         addLegendScats: function () {
             let that = this;
             this.legend = L.control({position: 'bottomright'});
@@ -704,6 +818,13 @@ $(function(){
             this.legend.addTo(this.map);
         },
 
+        /**
+         * The following function displays error modal dialog if there are validation and request errors found
+         *
+         * @method
+         * @param {title} title of the validation message to be displayed
+         * @param {body} body defines the content of the error message to be displayed
+         */
         showModal: function (title, body) {
             // Display error message to the user in a modal
             $('#alert-modal-title').html(title);

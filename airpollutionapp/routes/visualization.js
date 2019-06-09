@@ -1,3 +1,8 @@
+/*
+Server side code - The purpose of this file is to specify the backend utility functions for querying data
+from mongo db documents and returning them to the client front end application
+ */
+
 let express = require('express');
 let router = express.Router();
 let mongoClient = require('mongodb').MongoClient;
@@ -8,7 +13,14 @@ const dbName = 'AirPollutionDB';
 let dbCollectionList;
 let airpollutionDb;
 
+//Mongo db namespace controller for handling mongo db query functionalities
 let mongoDb = {
+
+    /**
+     * The following function returns all the collections from the database
+     *
+     * @method
+     */
     getCollections: function () {
         mongoClient.connect(url, function (err, client) {
             airpollutionDb = client.db(dbName);
@@ -18,13 +30,28 @@ let mongoDb = {
             });
         });
     },
+
+    /**
+     * The following function returns a specific collection from the database
+     *
+     * @method
+     * @param {name} name - the name of the collection which needs to be queried from the database
+     */
     returnCollection: function (name) {
         return dbCollectionList.filter(obj => {
             return obj.name === name;
         })
     },
+
+    /**
+     * The following function returns all the documents using a collection name and search parameters
+     *
+     * @method
+     * @param {collectionName} collectionName - the collection name which needs to be queried from the database
+     * @param {searchParams} searchParams - search parameters passed for filtering the collection
+     * @param {res} res - the response data sent from server to the client
+     */
     getDocuments: function (collectionName, searchParams, res) {
-        //this.getIndex("DEE",collectionName);
         let cursor = airpollutionDb.collection(collectionName).find({}).toArray(function (err, docs) {
             if (docs) {
                 res.send(docs);
@@ -34,12 +61,37 @@ let mongoDb = {
             }
         });
     },
+
+    /**
+     * The following function gets filtered documents from the collection by passing a search object for filtering
+     * data
+     *
+     * @method
+     * @param {collectionName} collectionName -  the collection name which needs to be queried from the database
+     * @param {searchObject} searchObject - The search object for filtering the data from the collection queried
+     */
     getFilteredDocuments: function (collectionName, searchObject) {
         return airpollutionDb.collection(collectionName).find(searchObject);
     },
+
+    /**
+     * The following function resolves and returns response on successfully querying a collection
+     *
+     * @method
+     * @param {response} response -  the response object created which stores data from database
+     * @param {res} res - The response send by the server to the front end client
+     */
     resolveAndReturnResponse: function (response, res) {
         res.send(response);
     },
+
+    /**
+     * The following function creates a query map of the query parameters passed by the AJAX request call
+     * from client front end application
+     *
+     * @method
+     * @param {queryParams} queryParams -  array of query parameters received from the AJAX call
+     */
     constructQueryMap: function (queryParams) {
         let map = new Map();
         queryParams.forEach(param => {
@@ -50,12 +102,41 @@ let mongoDb = {
         });
         return map;
     },
+
+    /**
+     * The following function performs an aggregation operation on a collection from the database
+     *
+     * @method
+     * @param {collectionName} collectionName -  the name of the collection queried from the database
+     * @param {aggregateArray} aggregateArray - Specifies the aggregation operation to be performed on the collection
+     * from the database
+     */
     performAggregation: function (collectionName, aggregateArray) {
         return airpollutionDb.collection(collectionName).aggregate(aggregateArray);
     },
+
+    /**
+     * The following function returns the sorted list of documents from a collection queried
+     * from the database
+     *
+     * @method
+     * @param {collectionName} collectionName -  the collection name from which data has to be obtained
+     * from the database
+     * @param {searchObject} searchObject - Search object specifying search parameters for filtering data
+     * @param {sortObject} sortObject - sort object specifying the sorting requirements for retrieving data
+     * on the basis of selected data attributes
+     */
     getSortedDocuments: function (collectionName, searchObject, sortObject) {
         return airpollutionDb.collection(collectionName).find(searchObject).sort(sortObject);
     },
+
+    /**
+     * The following function resolves multiple promises and returns data from multiple collections
+     *
+     * @method
+     * @param {queryPromise} queryPromise -  Array of promises passed for multiple collections
+     * @param {res} res - The response send by the server to the front end client application
+     */
     resolveAllPromise: function (queryPromise, res) {
         let items = 0;
         let response = {};
@@ -94,6 +175,7 @@ router.get('/', function (req, res, next) {
 
 });
 
+//backend controller to handle AJAX call - return emission substance data to the client front end application
 router.get('/getEmissionData', function (req, res, next) {
     let collection_object = mongoDb.returnCollection("DEESubstances");
     let collectionList = ["DEESubstances"];
@@ -101,6 +183,8 @@ router.get('/getEmissionData', function (req, res, next) {
     mongoDb.getDocuments(collection_object[0].name, collectionList, res);
 });
 
+//backend controller to handle AJAX call - return filtered emission data for selected year and
+//  substance to the client front end application
 router.get('/getFilteredEmissionData', function (req, res, next) {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -162,6 +246,8 @@ router.get('/getFilteredEmissionData', function (req, res, next) {
     });
 });
 
+//backend controller to handle AJAX call - return chart visualization data for selected region and substance
+// to the client front end application
 router.get('/getChartVisualizationData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -193,6 +279,8 @@ router.get('/getChartVisualizationData', (req, res, next) => {
     mongoDb.resolveAllPromise(queryPromise, res);
 });
 
+//backend controller to handle AJAX call - return region emission data
+// for selected year, region and substance to the front end application
 router.get('/getRegionEmissionData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -220,6 +308,7 @@ router.get('/getRegionEmissionData', (req, res, next) => {
     });
 });
 
+//backend controller to handle AJAX call - return summary correlation data to the front end application
 router.get('/getSummaryCorrelationData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -246,6 +335,7 @@ router.get('/getSummaryCorrelationData', (req, res, next) => {
     mongoDb.resolveAllPromise(queryPromise, res);
 });
 
+//backend controller to handle AJAX call - return Epa summary air index data to the front end application
 router.get('/getEPAAirIndexData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -266,6 +356,8 @@ router.get('/getEPAAirIndexData', (req, res, next) => {
     });
 });
 
+//backend controller to handle AJAX call - return EPA, SCATS data for the selcted year
+// to the client front end application
 router.get('/getChartData', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -286,8 +378,6 @@ router.get('/getChartData', (req, res, next) => {
         let epaAqifilter_criteria = {siteId: parseInt(siteId)};//Picking only 1 time to just have the emission data
         queryPromise.push(mongoDb.getFilteredDocuments(epaAqicollectionName, epaAqifilter_criteria));
     });
-    //Getting scats data
-
 
     //Getting EPA data for that selected year
     let epaCollectionName = "EPA" + currentYr + "MeasurementsCollection";
@@ -308,6 +398,8 @@ router.get('/getChartData', (req, res, next) => {
     mongoDb.resolveAllPromise(queryPromise, res);
 });
 
+//backend controller to handle AJAX call - return the air quality index values for EPA stations
+//for selected times
 router.get('/getAQIScatsDataPerTime', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
@@ -326,6 +418,8 @@ router.get('/getAQIScatsDataPerTime', (req, res, next) => {
     mongoDb.resolveAllPromise(queryPromise, res);
 });
 
+//backend controller to handle AJAX call - return emission substance data for a selected year, region
+// for major outdoor pollutants
 router.get('/getSelectedSubstanceRegionEmission', (req, res, next) => {
     let queryParams = req.url.split('?');
     queryParams.shift();
