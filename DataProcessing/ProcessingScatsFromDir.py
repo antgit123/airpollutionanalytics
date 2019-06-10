@@ -13,7 +13,7 @@ def processScatsFiles(sqlContext, filteredTrafficLightsDf, volume_data_filepath,
         files.remove("")
 
     joinedDf = 0
-    fileCount = 0;
+    fileCount = 0
     for file in files:
         fileCount = fileCount + 1
         volumeFile = sqlContext.read.csv(file, header=True)

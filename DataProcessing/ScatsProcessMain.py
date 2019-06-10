@@ -5,6 +5,7 @@ import EPAScatsDistanceCalculate
 import ProcessingScatsFromDir
 import sys
 
+# main file for processing the traffic data
 def main():
     conf = SparkConf().setAppName("scatsProcessing").setMaster("spark://45.113.232.133:7077").set('spark.logConf', True)
 
